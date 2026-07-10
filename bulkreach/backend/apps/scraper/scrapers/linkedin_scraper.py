@@ -150,16 +150,13 @@ class LinkedInScraper(BaseScraper):
                                 if not title or not company:
                                     continue
 
-                                name, email = self._extract_contact_info(link, company)
-                                results.append(self._normalize_result({
-                                    "name": name,
-                                    "email": email,
+                                results.append({
                                     "job_title": title,
                                     "company": company,
                                     "source_url": link,
                                     "linkedin_url": link,
                                     "posted_date": posted_date,
-                                }))
+                                })
                             except Exception as ex:
                                 logger.debug("LinkedIn card parse error: %s", ex)
                                 continue
@@ -177,6 +174,6 @@ class LinkedInScraper(BaseScraper):
         except Exception as exc:
             logger.error("LinkedIn scraper browser context failed: %s", exc)
 
-        logger.info("LinkedIn scraper returned %d results.", len(results))
-        return results[:max_results]
+        logger.info("LinkedIn scraper returned %d raw results.", len(results))
+        return self._resolve_contacts_concurrently(results[:max_results])
 

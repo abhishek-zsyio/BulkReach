@@ -109,6 +109,30 @@ class BaseScraper(ABC):
 
         return fallback_name, fallback_email
 
+    def _resolve_contacts_concurrently(self, candidates: List[Dict], max_workers: int = 10) -> List[Dict]:
+        """Resolves name and email for a list of candidate dictionaries concurrently using ThreadPoolExecutor."""
+        from concurrent.futures import ThreadPoolExecutor
+
+        def fetch_info(cand):
+            link = cand.get("source_url") or cand.get("linkedin_url")
+            company = cand.get("company", "")
+            
+            # If name or email are already populated (e.g. from an API), don't fetch again
+            if cand.get("name") and cand.get("email"):
+                return cand
+
+            name, email = self._extract_contact_info(link, company)
+            res = cand.copy()
+            res["name"] = name
+            res["email"] = email
+            return res
+
+        workers = min(max_workers, len(candidates)) if candidates else 1
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            resolved = list(executor.map(fetch_info, candidates))
+        
+        return [self._normalize_result(r) for r in resolved]
+
     def _normalize_result(self, raw: dict) -> dict:
         """Ensure all expected keys exist with defaults."""
         return {

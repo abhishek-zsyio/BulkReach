@@ -65,19 +65,15 @@ class WebScraper(BaseScraper):
                             if len(parts) > 1:
                                 company = parts[1].split("/")[0].replace("-", " ").title()
                         
-                        name, email = self._extract_contact_info(link, company)
-                        
-                        results.append(self._normalize_result({
-                            "name": name,
-                            "email": email,
+                        results.append({
                             "job_title": title,
                             "company": company,
                             "source_url": link,
-                        }))
+                        })
                         seen_urls.add(link)
                             
         except Exception as exc:
             logger.error("WebScraper request failed: %s", exc)
 
-        logger.info("WebScraper returned %d results.", len(results))
-        return results[:max_results]
+        logger.info("WebScraper returned %d raw results.", len(results))
+        return self._resolve_contacts_concurrently(results[:max_results])

@@ -12,7 +12,7 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-const VALID_GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+const VALID_GEMINI_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { user, fetchUserProfile, accessToken } = useAuth();
@@ -21,7 +21,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [deleteResume] = useDeleteResumeMutation();
 
   const [apiKeyInput, setApiKeyInput] = useState("");
-  const [geminiModel, setGeminiModel] = useState("gemini-2.5-flash");
+  const [geminiModel, setGeminiModel] = useState("gemini-3.5-flash");
   const [newResumeName, setNewResumeName] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
@@ -30,7 +30,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     if (isOpen && user) {
       setApiKeyInput("");
       const saved = user.gemini_model || "";
-      setGeminiModel(VALID_GEMINI_MODELS.includes(saved) ? saved : "gemini-2.5-flash");
+      setGeminiModel(VALID_GEMINI_MODELS.includes(saved) ? saved : "gemini-3.5-flash");
     }
   }, [isOpen, user]);
 
@@ -97,12 +97,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
             transition={{ type: "spring", stiffness: 320, damping: 28 }}
-            className="w-full max-w-3xl max-h-[95vh] flex border-[3px] border-rose-border bg-rose-surface shadow-[12px_12px_0px_0px_var(--color-shadow)]"
+            className="w-full max-w-3xl max-h-[95vh] flex border-2 border-rose-border bg-rose-surface shadow-[8px_8px_0px_0px_var(--color-shadow)]"
           >
             {/* ── Left rail: identity + step markers ── */}
-            <div className="hidden sm:flex flex-col w-[92px] shrink-0 border-r-[3px] border-rose-border bg-rose-text">
-              <div className="p-3 border-b-[3px] border-rose-border flex items-center justify-center">
-                <div className="w-9 h-9 border-[3px] border-rose-surface bg-rose-iris flex items-center justify-center">
+            <div className="hidden sm:flex flex-col w-[92px] shrink-0 border-r-2 border-rose-border bg-rose-text">
+              <div className="p-3 border-b-2 border-rose-border flex items-center justify-center">
+                <div className="w-9 h-9 border-2 border-rose-surface bg-rose-iris flex items-center justify-center">
                   <Settings size={16} className="text-white" />
                 </div>
               </div>
@@ -110,7 +110,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 {["Token", "Model", "Profile"].map((label, i) => (
                   <div
                     key={label}
-                    className="flex-1 flex flex-col items-center justify-center gap-1.5 border-b-[3px] border-rose-border last:border-b-0"
+                    className="flex-1 flex flex-col items-center justify-center gap-1.5 border-b-2 border-rose-border last:border-b-0"
                   >
                     <span className="text-rose-surface font-black text-lg leading-none">{i + 1}</span>
                     <span
@@ -126,7 +126,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             <div className="flex flex-col flex-1 min-w-0">
               {/* ── Header ── */}
-              <div className="flex items-start justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b-[3px] border-rose-border shrink-0">
+              <div className="flex items-start justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b-2 border-rose-border shrink-0">
                 <div>
                   <h3 className="text-lg font-black text-rose-text uppercase tracking-tight leading-none">
                     AI &amp; Resume Settings
@@ -137,7 +137,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 shrink-0 flex items-center justify-center text-rose-text bg-rose-surface border-[3px] border-rose-border hover:bg-rose-love hover:text-white hover:border-rose-love active:scale-95 transition-all"
+                  className="w-8 h-8 shrink-0 flex items-center justify-center text-rose-text bg-rose-surface border-2 border-rose-border hover:bg-rose-love hover:text-white hover:border-rose-love active:scale-95 transition-all"
                 >
                   <X size={16} className="stroke-[3]" />
                 </button>
@@ -158,7 +158,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         </span>
                       )}
                     </div>
-                    <div className="border-[3px] border-rose-border p-3.5">
+                    <div className="border-2 border-rose-border p-3.5">
                       <label htmlFor="settings-api-key" className="block text-[10px] font-black uppercase tracking-widest text-rose-muted mb-1.5">
                         API Token
                       </label>
@@ -181,7 +181,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <span className="text-[10px] font-black uppercase tracking-widest text-rose-muted mb-2.5 block">
                       02 — Model Selection
                     </span>
-                    <div className="border-[3px] border-rose-border p-3.5">
+                    <div className="border-2 border-rose-border p-3.5">
                       <label htmlFor="settings-model" className="block text-[10px] font-black uppercase tracking-widest text-rose-muted mb-1.5">
                         Gemini AI Model
                       </label>
@@ -189,7 +189,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         value={geminiModel}
                         onChange={(val) => setGeminiModel(val.toString())}
                         options={[
-                          { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash — Recommended · Fast & Smart" },
+                          { value: "gemini-3.5-flash", label: "Gemini 3.5 Flash — Recommended · Fastest" },
+                          { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash — Fast & Smart" },
                           { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro — Most Powerful Reasoning" },
                           { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash — Fast & Balanced" },
                           { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash — Legacy · Stable" },
@@ -207,7 +208,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </span>
                     <div className="space-y-4">
                       {resumes.length > 0 && (
-                        <div className="border-[3px] border-rose-border divide-y-[3px] divide-rose-border">
+                        <div className="border-2 border-rose-border divide-y-2 divide-rose-border">
                           {resumes.map((r) => (
                             <div
                               key={r.id}
@@ -222,7 +223,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                               <button
                                 type="button"
                                 onClick={() => deleteResume(r.id)}
-                                className="bg-rose-surface border-[3px] border-rose-border hover:bg-rose-love hover:text-white hover:border-rose-love p-1.5 transition-all rounded-none shadow-[2px_2px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                                className="bg-rose-surface border-2 border-rose-border hover:bg-rose-love hover:text-white hover:border-rose-love p-1.5 transition-all rounded-none shadow-[2px_2px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-0 active:translate-y-0 active:shadow-none"
                               >
                                 <Trash size={14} className="stroke-[2.5]" />
                               </button>
@@ -231,8 +232,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         </div>
                       )}
 
-                      <div className="border-[3px] border-rose-border">
-                        <div className="p-3.5 border-b-[3px] border-rose-border">
+                      <div className="border-2 border-rose-border">
+                        <div className="p-3.5 border-b-2 border-rose-border">
                           <label htmlFor="resume-name" className="block text-[10px] font-black uppercase tracking-widest text-rose-muted mb-1.5">
                             Profile Name
                           </label>
@@ -253,7 +254,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             type="file"
                             accept=".pdf"
                             onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-                            className="w-full text-xs font-bold text-rose-text file:mr-4 file:py-1.5 file:px-3 file:border-[3px] file:border-rose-border file:bg-rose-surface file:text-rose-text hover:file:bg-rose-hl-low cursor-pointer"
+                            className="w-full text-xs font-bold text-rose-text file:mr-4 file:py-1.5 file:px-3 file:border-2 file:border-rose-border file:bg-rose-surface file:text-rose-text hover:file:bg-rose-hl-low cursor-pointer"
                           />
                         </div>
                       </div>
@@ -263,7 +264,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
 
               {/* ── Footer ── */}
-              <div className="flex items-center justify-between gap-3 px-5 sm:px-6 py-4 border-t-[3px] border-rose-border shrink-0">
+              <div className="flex items-center justify-between gap-3 px-5 sm:px-6 py-4 border-t-2 border-rose-border shrink-0">
                 <button
                   type="button"
                   onClick={onClose}
@@ -275,7 +276,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   type="submit"
                   form="settings-form"
                   disabled={isUploadingResume}
-                  className="flex items-center gap-2 bg-rose-text text-rose-surface text-xs font-black uppercase tracking-widest py-3 px-6 border-[3px] border-rose-text shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] active:translate-x-0 active:translate-y-0 active:shadow-none transition-all disabled:opacity-60 disabled:translate-x-0 disabled:translate-y-0"
+                  className="flex items-center gap-2 bg-rose-text text-rose-surface text-xs font-black uppercase tracking-widest py-3 px-6 border-2 border-rose-text shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] active:translate-x-0 active:translate-y-0 active:shadow-none transition-all disabled:opacity-60 disabled:translate-x-0 disabled:translate-y-0"
                 >
                   {isUploadingResume ? (
                     <>

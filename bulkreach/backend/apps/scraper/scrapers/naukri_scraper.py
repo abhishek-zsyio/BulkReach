@@ -158,17 +158,14 @@ class NaukriScraper(BaseScraper):
                                 if not title or not company:
                                     continue
 
-                                name, email = self._extract_contact_info(link, company)
-                                results.append(self._normalize_result({
-                                    "name": name,
-                                    "email": email,
+                                results.append({
                                     "job_title": title,
                                     "company": company,
                                     "source_url": link,
                                     "posted_date": posted_date,
                                     "location": location_val,
                                     "salary": salary_val,
-                                }))
+                                })
                             except Exception as ex:
                                 logger.debug("Naukri card parse error: %s", ex)
                                 continue
@@ -184,5 +181,5 @@ class NaukriScraper(BaseScraper):
         except Exception as exc:
             logger.error("Naukri scraper browser context failed: %s", exc)
 
-        logger.info("Naukri scraper returned %d results.", len(results))
-        return results[:max_results]
+        logger.info("Naukri scraper returned %d raw results.", len(results))
+        return self._resolve_contacts_concurrently(results[:max_results])

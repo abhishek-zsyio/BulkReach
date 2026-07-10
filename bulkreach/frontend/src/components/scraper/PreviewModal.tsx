@@ -39,12 +39,12 @@ export function PreviewModal({ templateId, templateName, onClose }: PreviewModal
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 24 }}
         transition={{ type: "spring", stiffness: 320, damping: 28 }}
-        className="w-full max-w-4xl max-h-[90vh] flex border-[3px] border-rose-border bg-rose-surface shadow-[12px_12px_0px_0px_var(--color-shadow)]"
+        className="w-full max-w-4xl h-[80vh] min-h-[500px] max-h-[90vh] flex border-2 border-rose-border bg-rose-surface shadow-[8px_8px_0px_0px_var(--color-shadow)]"
       >
         {/* ── Left rail: identity + step markers ── */}
-        <div className="hidden sm:flex flex-col w-[92px] shrink-0 border-r-[3px] border-rose-border bg-rose-text">
-          <div className="p-3 border-b-[3px] border-rose-border flex items-center justify-center">
-            <div className="w-9 h-9 border-[3px] border-rose-surface bg-rose-pine flex items-center justify-center">
+        <div className="hidden sm:flex flex-col w-[92px] shrink-0 border-r-2 border-rose-border bg-rose-text">
+          <div className="p-3 border-b-2 border-rose-border flex items-center justify-center">
+            <div className="w-9 h-9 border-2 border-rose-surface bg-rose-pine flex items-center justify-center">
               <Eye size={16} className="text-white" />
             </div>
           </div>
@@ -52,7 +52,7 @@ export function PreviewModal({ templateId, templateName, onClose }: PreviewModal
             {["Preview"].map((label, i) => (
               <div
                 key={label}
-                className="flex-1 flex flex-col items-center justify-center gap-1.5 border-b-[3px] border-rose-border last:border-b-0"
+                className="flex-1 flex flex-col items-center justify-center gap-1.5 border-b-2 border-rose-border last:border-b-0"
               >
                 <span className="text-rose-surface font-black text-lg leading-none">{i + 1}</span>
                 <span
@@ -68,7 +68,7 @@ export function PreviewModal({ templateId, templateName, onClose }: PreviewModal
 
         <div className="flex flex-col flex-1 min-w-0">
           {/* ── Header ── */}
-          <div className="flex items-start justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b-[3px] border-rose-border shrink-0">
+          <div className="flex items-start justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b-2 border-rose-border shrink-0">
             <div>
               <h3 className="text-lg font-black text-rose-text uppercase tracking-tight leading-none">
                 Template Preview
@@ -79,14 +79,14 @@ export function PreviewModal({ templateId, templateName, onClose }: PreviewModal
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 shrink-0 flex items-center justify-center text-rose-text bg-rose-surface border-[3px] border-rose-border hover:bg-rose-love hover:text-white hover:border-rose-love active:scale-95 transition-all"
+              className="w-8 h-8 shrink-0 flex items-center justify-center text-rose-text bg-rose-surface border-2 border-rose-border hover:bg-rose-love hover:text-white hover:border-rose-love active:scale-95 transition-all"
             >
               <X size={16} className="stroke-[3]" />
             </button>
           </div>
 
           {/* ── Body ── */}
-          <div className="flex-1 overflow-hidden bg-rose-base relative border-b-[3px] border-rose-border">
+          <div className="flex-1 overflow-hidden bg-rose-base relative border-b-2 border-rose-border">
             {isLoading ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                 <Loader2 className="animate-spin text-rose-pine h-8 w-8" />
@@ -113,7 +113,7 @@ export function PreviewModal({ templateId, templateName, onClose }: PreviewModal
             </button>
             <button
               onClick={onClose}
-              className="flex items-center gap-2 bg-rose-text text-rose-surface text-xs font-black uppercase tracking-widest py-3 px-6 border-[3px] border-rose-text shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] active:translate-x-0 active:translate-y-0 active:shadow-none transition-all"
+              className="flex items-center gap-2 bg-rose-text text-rose-surface text-xs font-black uppercase tracking-widest py-3 px-6 border-2 border-rose-text shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] active:translate-x-0 active:translate-y-0 active:shadow-none transition-all"
             >
               Done
               <ArrowRight size={14} className="stroke-[3]" />

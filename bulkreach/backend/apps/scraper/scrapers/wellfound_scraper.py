@@ -116,14 +116,11 @@ class WellfoundScraper(BaseScraper):
                             if not title or not company:
                                 continue
 
-                            name, email = self._extract_contact_info(link, company)
-                            results.append(self._normalize_result({
-                                "name": name,
-                                "email": email,
+                            results.append({
                                 "job_title": title,
                                 "company": company,
                                 "source_url": link,
-                            }))
+                            })
                         except Exception as ex:
                             logger.debug("Wellfound card parse error: %s", ex)
                             continue
@@ -136,5 +133,5 @@ class WellfoundScraper(BaseScraper):
         except Exception as exc:
             logger.error("Wellfound scraper browser context failed: %s", exc)
 
-        logger.info("Wellfound scraper returned %d results.", len(results))
-        return results[:max_results]
+        logger.info("Wellfound scraper returned %d raw results.", len(results))
+        return self._resolve_contacts_concurrently(results[:max_results])

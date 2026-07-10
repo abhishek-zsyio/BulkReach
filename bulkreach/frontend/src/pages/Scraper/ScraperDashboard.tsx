@@ -94,8 +94,16 @@ export function ScraperDashboard() {
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   // Replaced refs with state for framer-motion modals
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -134,7 +142,7 @@ export function ScraperDashboard() {
       id: selectedJobId!,
       page: currentPage,
       page_size: pageSize,
-      search: searchQuery,
+      search: debouncedSearchQuery,
       has_email: hasEmailFilter || undefined,
       has_recruiter: hasRecruiterFilter || undefined,
       location: locationFilter.trim() || undefined,

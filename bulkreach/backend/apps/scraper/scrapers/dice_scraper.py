@@ -85,14 +85,11 @@ class DiceScraper(BaseScraper):
                                 if link and not link.startswith("http"):
                                     link = f"https://www.dice.com{link}"
                                     
-                                name, email = self._extract_contact_info(link, company)
-                                results.append(self._normalize_result({
-                                    "name": name,
-                                    "email": email,
+                                results.append({
                                     "job_title": title,
                                     "company": company,
                                     "source_url": link,
-                                }))
+                                })
                             except Exception as ex:
                                 logger.debug("Dice card parse error: %s", ex)
                                 continue
@@ -106,5 +103,5 @@ class DiceScraper(BaseScraper):
         except Exception as exc:
             logger.error("Dice scraper browser context failed: %s", exc)
             
-        logger.info("Dice scraper returned %d results.", len(results))
-        return results[:max_results]
+        logger.info("Dice scraper returned %d raw results.", len(results))
+        return self._resolve_contacts_concurrently(results[:max_results])
