@@ -1,0 +1,629 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ══════════════════════════════════════════
+       🌲 EVERFOREST — Light Medium
+       github.com/sainnhe/everforest
+    ══════════════════════════════════════════ */
+    --color-base: #f2efdf;          /* bg0 – warm parchment */
+    --color-base-rgb: 242, 239, 223;
+    --color-surface: #fffbef;       /* bg_dim – lightest warm cream */
+    --color-surface-rgb: 255, 251, 239;
+    --color-overlay: #edeada;       /* bg1 – slightly darker cream */
+    --color-overlay-rgb: 237, 234, 218;
+    --color-muted: #859289;         /* grey1 – muted warm grey */
+    --color-muted-rgb: 133, 146, 137;
+    --color-subtle: #5c6a72;        /* fg – main foreground */
+    --color-subtle-rgb: 92, 106, 114;
+    --color-text: #3a3f3f;          /* bg_visual darkened for borders */
+    --color-text-rgb: 58, 63, 63;
+
+    /* ── Everforest Light Accent Palette ── */
+    --color-love: #f85552;          /* red */
+    --color-love-rgb: 248, 85, 82;
+    --color-gold: #dfa000;          /* yellow */
+    --color-gold-rgb: 223, 160, 0;
+    --color-rose: #df69ba;          /* purple */
+    --color-rose-rgb: 223, 105, 186;
+    --color-pine: #8da101;          /* green — primary */
+    --color-pine-rgb: 141, 161, 1;
+    --color-foam: #35a77c;          /* aqua */
+    --color-foam-rgb: 53, 167, 124;
+    --color-iris: #3a94c5;          /* blue */
+    --color-iris-rgb: 58, 148, 197;
+
+    /* ── Everforest Light Highlight Levels ── */
+    --color-hl-low: #e5dfc5;        /* bg2 */
+    --color-hl-low-rgb: 229, 223, 197;
+    --color-hl-med: #c9c19c;        /* bg4 / selection */
+    --color-hl-med-rgb: 201, 193, 156;
+    --color-hl-high: #3a3f3f;       /* border shadow */
+    --color-hl-high-rgb: 58, 63, 63;
+
+    /* ── Semantic border & shadow tokens ── */
+    --color-border: #3a3f3f;        /* light: dark border for contrast */
+    --color-border-rgb: 58, 63, 63;
+    --color-shadow: #3a3f3f;        /* light: offset shadow color */
+    --color-shadow-rgb: 58, 63, 63;
+
+    color-scheme: light;
+  }
+
+  .dark {
+    /* ══════════════════════════════════════════
+       🌲 EVERFOREST — Dark Medium
+       github.com/sainnhe/everforest
+    ══════════════════════════════════════════ */
+    --color-base: #2d353b;          /* bg0 – main dark background */
+    --color-base-rgb: 45, 53, 59;
+    --color-surface: #272e33;       /* bg_dim – slightly darker panel */
+    --color-surface-rgb: 39, 46, 51;
+    --color-overlay: #374145;       /* bg1 – raised surfaces */
+    --color-overlay-rgb: 55, 65, 69;
+    --color-muted: #7a8478;         /* grey0 */
+    --color-muted-rgb: 122, 132, 120;
+    --color-subtle: #9da9a0;        /* grey2 – brighter muted */
+    --color-subtle-rgb: 157, 169, 160;
+    --color-text: #d3c6aa;          /* fg – warm cream foreground */
+    --color-text-rgb: 211, 198, 170;
+
+    /* ── Everforest Dark Accent Palette ── */
+    --color-love: #e67e80;          /* red */
+    --color-love-rgb: 230, 126, 128;
+    --color-gold: #dbbc7f;          /* yellow */
+    --color-gold-rgb: 219, 188, 127;
+    --color-rose: #d699b6;          /* purple */
+    --color-rose-rgb: 214, 153, 182;
+    --color-pine: #a7c080;          /* green — primary */
+    --color-pine-rgb: 167, 192, 128;
+    --color-foam: #83c092;          /* aqua */
+    --color-foam-rgb: 131, 192, 146;
+    --color-iris: #7fbbb3;          /* blue */
+    --color-iris-rgb: 127, 187, 179;
+
+    /* ── Everforest Dark Highlight Levels ── */
+    --color-hl-low: #3d484d;        /* bg2 */
+    --color-hl-low-rgb: 61, 72, 77;
+    --color-hl-med: #4f5b58;        /* bg4 / selection */
+    --color-hl-med-rgb: 79, 91, 88;
+    --color-hl-high: #1e2326;       /* hard dark shadow */
+    --color-hl-high-rgb: 30, 35, 38;
+
+    /* ── Semantic border & shadow tokens ── */
+    --color-border: #4f5b58;        /* dark: soft bg4 — not the cream fg! */
+    --color-border-rgb: 79, 91, 88;
+    --color-shadow: #1e2326;        /* dark: hard dark offset shadow */
+    --color-shadow-rgb: 30, 35, 38;
+
+    color-scheme: dark;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: "Inter", system-ui, sans-serif;
+    background-color: var(--color-base);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-hl-low);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-foam);
+    border-radius: 4px;
+    border: 2px solid var(--color-base);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-pine);
+  }
+
+  /* ─── Checkbox & Radio — Everforest themed ─── */
+  input[type="checkbox"],
+  input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--color-border);
+    background-color: var(--color-overlay);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    border-radius: 0px; /* keep sharp corners */
+  }
+
+  input[type="radio"] {
+    border-radius: 50%;
+  }
+
+  input[type="checkbox"]:checked,
+  input[type="radio"]:checked {
+    background-color: var(--color-pine);
+    border-color: var(--color-pine);
+  }
+
+  input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    left: 4px;
+    width: 4px;
+    height: 8px;
+    border: 2px solid var(--color-base);
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+  }
+
+  input[type="radio"]:checked::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--color-base);
+  }
+
+  input[type="checkbox"]:hover:not(:disabled),
+  input[type="radio"]:hover:not(:disabled) {
+    border-color: var(--color-pine);
+    box-shadow: 2px 2px 0px 0px var(--color-shadow);
+  }
+
+  input[type="checkbox"]:focus-visible,
+  input[type="radio"]:focus-visible {
+    outline: none;
+    border-color: var(--color-pine);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-pine) 30%, transparent);
+  }
+
+  input[type="checkbox"]:disabled,
+  input[type="radio"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* ─── Range Slider ─── */
+  input[type="range"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: var(--color-hl-med);
+    border-radius: 0px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 0px;
+    background: var(--color-pine);
+    border: 2px solid var(--color-border);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    background: var(--color-foam);
+    transform: scale(1.1);
+  }
+
+  /* ─── Focus ring for all interactive elements ─── */
+  button:focus-visible,
+  a:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--color-pine);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* ─── Flat & Sharp Card ─── */
+  .glass {
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 0px;
+    box-shadow: 4px 4px 0px 0px var(--color-shadow);
+  }
+
+  .glass-hover {
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 0px;
+    transition: all 0.15s ease-out;
+  }
+  .glass-hover:hover {
+    background: var(--color-surface);
+    border-color: var(--color-pine);
+    transform: translate(-3px, -3px);
+    box-shadow: 6px 6px 0px 0px var(--color-shadow);
+  }
+
+  /* ─── Cards ─── */
+  .card {
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 0px;
+    padding: 24px;
+    box-shadow: 4px 4px 0px 0px var(--color-shadow);
+    transition: all 0.15s ease-out;
+  }
+  .card-interactive {
+    @apply cursor-pointer;
+  }
+  .card-interactive:hover {
+    border-color: var(--color-pine);
+    transform: translate(-3px, -3px);
+    box-shadow: 7px 7px 0px 0px var(--color-shadow);
+  }
+  .card-interactive:active {
+    transform: translate(0, 0);
+    box-shadow: 4px 4px 0px 0px var(--color-shadow);
+  }
+
+  .stat-card {
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 0px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 3px 3px 0px 0px var(--color-shadow);
+    transition: all 0.15s ease;
+  }
+  .stat-card:hover {
+    border-color: var(--color-pine);
+    transform: translate(-3px, -3px);
+    box-shadow: 6px 6px 0px 0px var(--color-shadow);
+  }
+
+  /* ─── Buttons ─── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-none font-bold text-sm text-white select-none
+           border-2 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--color-pine);
+    border-color: var(--color-border);
+  }
+  .btn-primary:hover:not(:disabled) {
+    @apply -translate-x-[3px] -translate-y-[3px];
+    background-color: var(--color-pine);
+    box-shadow: 3px 3px 0px 0px var(--color-shadow);
+  }
+  .btn-primary:active:not(:disabled) {
+    @apply translate-x-0 translate-y-0 shadow-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-none font-bold text-sm select-none
+           border-2 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    @apply -translate-x-[3px] -translate-y-[3px];
+    border-color: var(--color-pine);
+    background-color: var(--color-hl-low);
+    box-shadow: 3px 3px 0px 0px var(--color-shadow);
+  }
+  .btn-secondary:active:not(:disabled) {
+    @apply translate-x-0 translate-y-0 shadow-none;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-none font-bold text-sm text-white select-none
+           border-2 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--color-love);
+    border-color: var(--color-border);
+  }
+  .btn-danger:hover:not(:disabled) {
+    @apply -translate-x-[3px] -translate-y-[3px];
+    background-color: var(--color-love);
+    box-shadow: 3px 3px 0px 0px var(--color-shadow);
+  }
+  .btn-danger:active:not(:disabled) {
+    @apply translate-x-0 translate-y-0 shadow-none;
+  }
+
+  /* ─── Inputs & Textareas ─── */
+  .input,
+  .textarea,
+  textarea {
+    @apply w-full px-4 py-2.5 rounded-none text-sm transition-all duration-150;
+    color: var(--color-text);
+    background-color: var(--color-overlay);
+    border: 2px solid var(--color-border);
+  }
+  .input:focus,
+  .textarea:focus,
+  textarea:focus {
+    outline: none;
+    background-color: var(--color-overlay);
+    border-color: var(--color-pine);
+    box-shadow: 3px 3px 0px 0px var(--color-foam);
+  }
+  .input::placeholder,
+  .textarea::placeholder,
+  textarea::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+  }
+
+  .select {
+    @apply w-full px-4 py-2.5 rounded-none text-sm transition-all duration-150 cursor-pointer appearance-none;
+    color: var(--color-text);
+    background-color: var(--color-overlay);
+    border: 2px solid var(--color-border);
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23859289' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 14px;
+    padding-right: 40px;
+  }
+  .select:focus {
+    outline: none;
+    background-color: var(--color-overlay);
+    border-color: var(--color-pine);
+    box-shadow: 3px 3px 0px 0px var(--color-foam);
+  }
+
+  .label {
+    @apply block text-[11px] font-extrabold mb-2 uppercase tracking-wider;
+    color: var(--color-text);
+  }
+
+  /* ─── Badges ─── */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-none text-[10px] font-extrabold tracking-wide uppercase;
+    border: 2px solid var(--color-border);
+  }
+
+  .badge-draft    { @apply badge; background-color: var(--color-hl-low); color: var(--color-subtle); }
+  .badge-queued   { @apply badge; color: var(--color-gold); background-color: color-mix(in srgb, var(--color-gold) 15%, transparent); }
+  .badge-running  { @apply badge; color: var(--color-iris); background-color: color-mix(in srgb, var(--color-iris) 15%, transparent); }
+  .badge-done     { @apply badge; color: var(--color-foam); background-color: color-mix(in srgb, var(--color-foam) 15%, transparent); }
+  .badge-failed   { @apply badge; color: var(--color-love); background-color: color-mix(in srgb, var(--color-love) 15%, transparent); }
+  .badge-paused   { @apply badge; color: var(--color-rose); background-color: color-mix(in srgb, var(--color-rose) 15%, transparent); }
+  .badge-cancelled { @apply badge; background-color: var(--color-hl-low); color: var(--color-muted); }
+  .badge-sent     { @apply badge; color: var(--color-foam); background-color: color-mix(in srgb, var(--color-foam) 15%, transparent); }
+  .badge-pending  { @apply badge; background-color: var(--color-hl-low); color: var(--color-muted); }
+
+  /* ─── Tables ─── */
+  .table-wrapper {
+    @apply w-full overflow-x-auto rounded-none;
+    border: 2px solid var(--color-border);
+    background-color: var(--color-surface);
+  }
+
+  .table {
+    @apply w-full text-sm border-collapse;
+  }
+
+  .table th {
+    @apply px-6 py-4 text-left text-[11px] font-extrabold uppercase tracking-wider;
+    color: var(--color-text);
+    background-color: var(--color-hl-low);
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .table td {
+    @apply px-6 py-4 transition-colors duration-100;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-hl-med);
+  }
+
+  .table tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .table tr:hover td {
+    background: var(--color-hl-low);
+  }
+}
+
+@layer utilities {
+  /* ─── Text Gradients ─── */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, var(--color-pine) 0%, var(--color-foam) 50%, var(--color-iris) 100%);
+  }
+
+  .text-gradient-subtle {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, var(--color-pine) 0%, var(--color-foam) 100%);
+  }
+
+  /* ─── Background Patterns ─── */
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, color-mix(in srgb, var(--color-hl-med) 40%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--color-hl-med) 40%, transparent) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .noise-bg {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+  }
+
+  /* ─── Glow Effects (Removed shadow/glow, replaced with flat outlines) ─── */
+  .glow-accent {
+    outline: 2px solid var(--color-iris);
+  }
+
+  .glow-sm {
+    outline: 1px solid var(--color-hl-high);
+  }
+
+  /* ─── Animations ─── */
+  .animate-fade-in {
+    animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-spin-slow {
+    animation: spin 6s linear infinite;
+  }
+
+  .animate-pulse-dot {
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--color-hl-low) 0%,
+      var(--color-hl-med) 40%,
+      var(--color-hl-low) 80%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-foam) var(--color-hl-low);
+  }
+}
+
+/* ─── Keyframes ─── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes borderPulse {
+  0%, 100% { border-color: var(--color-iris); box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-iris) 0%, transparent); }
+  50% { border-color: color-mix(in srgb, var(--color-iris) 60%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-iris) 15%, transparent); }
+}
+
+/* ─── TipTap Editor ─── */
+.ProseMirror {
+  min-height: 280px;
+  padding: 24px;
+  outline: none;
+  color: var(--color-text);
+  line-height: 1.75;
+  font-size: 14px;
+  background-color: var(--color-overlay);
+  border-radius: 0px;
+  font-family: "Inter", system-ui, sans-serif;
+  border: 2px solid var(--color-border);
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-muted);
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+.ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
+  color: var(--color-text);
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 0.5em;
+  margin-top: 1em;
+}
+.ProseMirror h2 { font-size: 1.25em; }
+.ProseMirror h3 { font-size: 1.1em; }
+
+.ProseMirror p { margin-bottom: 0.75em; }
+
+.ProseMirror strong { color: var(--color-text); font-weight: 800; }
+.ProseMirror em { color: var(--color-text); }
+
+.ProseMirror code {
+  background: var(--color-hl-low);
+  border: 1px solid var(--color-hl-med);
+  color: var(--color-text);
+  border-radius: 0px;
+  padding: 2px 6px;
+  font-size: 0.85em;
+  font-family: 'Fira Code', monospace;
+}
+
+.ProseMirror ul, .ProseMirror ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+}
+.ProseMirror li { margin-bottom: 0.3em; }
+.ProseMirror ul li::marker { color: var(--color-pine); }
+.ProseMirror ol li::marker { color: var(--color-pine); }
+
+.ProseMirror a { color: var(--color-pine); text-decoration: underline; font-weight: 700; }
+
+.ProseMirror blockquote {
+  border-left: 4px solid var(--color-text);
+  padding-left: 1em;
+  color: var(--color-subtle);
+  font-style: italic;
+  margin: 1em 0;
+  background-color: var(--color-hl-low);
+}
+
+.ProseMirror hr {
+  border: none;
+  border-top: 2px solid var(--color-text);
+  margin: 1.5em 0;
+}
+
+/* ─── Recharts Overrides ─── */
+.recharts-cartesian-grid-bg {
+  fill: transparent !important;
+}
+
+.recharts-background {
+  fill: transparent !important;
+}
+
+.recharts-tooltip-cursor {
+  fill: var(--color-hl-low) !important;
+  opacity: 0.3 !important;
+}
