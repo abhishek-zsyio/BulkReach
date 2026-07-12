@@ -116,6 +116,15 @@ function formatErrorMessage(errorStr: string | null | undefined): string {
   return errorStr.replace(/^429 RESOURCE_EXHAUSTED\.\s*/i, "");
 }
 
+function formatDuration(seconds: number | null | undefined): string {
+  if (seconds === null || seconds === undefined) return "";
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (remainingSeconds === 0) return `${minutes}m`;
+  return `${minutes}m ${remainingSeconds}s`;
+}
+
 // ── Main Component ───────────────────────────────────────────────────────────
 export function CompanyResearch() {
   const { user } = useAuth();
@@ -340,7 +349,12 @@ export function CompanyResearch() {
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin bg-rose-surface">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin bg-rose-surface"
+            >
               {filteredEnrichments.length === 0 ? (
                 <div className="py-12 px-4 text-center">
                   <div className="w-12 h-12 rounded-none bg-rose-overlay mx-auto flex items-center justify-center mb-3 border-2 border-rose-border">
@@ -364,7 +378,9 @@ export function CompanyResearch() {
                 </div>
               ) : (
                 filteredEnrichments.map((enrichment) => (
-                  <div
+                  <motion.div
+                    layout
+                    variants={itemVariants}
                     key={enrichment.id}
                     className={`flex items-center gap-3 p-3 rounded-none cursor-pointer border-2 transition-all duration-150 relative group ${
                       selectedId === enrichment.id
@@ -393,9 +409,15 @@ export function CompanyResearch() {
                           {enrichment.employees.length} employees
                         </span>
                         <div className="flex items-center min-h-[16px]">
-                          <span className="text-[10px] text-rose-muted font-semibold group-hover:hidden">
-                            {formatDate(enrichment.created_at)}
-                          </span>
+                          <div className="flex flex-col items-end text-[9px] font-bold text-rose-muted text-right group-hover:hidden leading-normal">
+                            <span>{formatDate(enrichment.created_at)}</span>
+                            {enrichment.duration !== undefined && enrichment.duration !== null && (
+                              <span className="text-rose-pine/80 font-mono tracking-tight lowercase flex items-center justify-end gap-1 mt-0.5">
+                                <Clock size={9} className="stroke-[2.5]" />
+                                {formatDuration(enrichment.duration)}
+                              </span>
+                            )}
+                          </div>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDelete(enrichment.id); }}
                             className="hidden group-hover:flex items-center gap-1 text-rose-muted hover:text-rose-love transition-colors py-0.5 px-1.5 border border-rose-hl-med hover:border-rose-love rounded-none bg-rose-surface text-[9px] font-black uppercase"
@@ -406,10 +428,10 @@ export function CompanyResearch() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               )}
-            </div>
+            </motion.div>
           </div>
         </motion.div>
 
@@ -513,6 +535,12 @@ export function CompanyResearch() {
                       </div>
 
                       <div className="flex flex-wrap gap-x-5 gap-y-2 mt-3">
+                        {selected.duration !== undefined && selected.duration !== null && (
+                          <div className="flex items-center gap-1.5 text-xs text-rose-muted font-semibold">
+                            <Clock size={12} className="text-rose-iris shrink-0" />
+                            <span>Duration: {formatDuration(selected.duration)}</span>
+                          </div>
+                        )}
                         {selected.industry && (
                           <div className="flex items-center gap-1.5 text-xs text-rose-muted font-semibold">
                             <Briefcase size={12} className="text-rose-iris shrink-0" />

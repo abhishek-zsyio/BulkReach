@@ -19,6 +19,11 @@ import {
   User,
   Trash,
   Linkedin,
+  MapPin,
+  Users,
+  DollarSign,
+  Sparkles,
+  Mail,
 } from "lucide-react";
 import { API_BASE_URL } from "@/utils/constants";
 import { StatusBadge } from "@/components/campaign/StatusBadge";
@@ -87,6 +92,15 @@ function getPlatformConfig(platform: string) {
     textClass: "text-rose-rose",
     borderClass: "border-rose-rose/35",
   };
+}
+
+function formatDuration(seconds: number | null | undefined): string {
+  if (seconds === null || seconds === undefined) return "";
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (remainingSeconds === 0) return `${minutes}m`;
+  return `${minutes}m ${remainingSeconds}s`;
 }
 
 export function ScraperDashboard() {
@@ -496,8 +510,9 @@ export function ScraperDashboard() {
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 pl-3">
           <div>
             <div className="flex items-center gap-3 mb-1.5">
-              <h1 className="text-3xl font-black text-rose-text tracking-tight uppercase">
-                🎯 Job Scraper
+              <h1 className="text-3xl font-black text-rose-text tracking-tight uppercase flex items-center gap-2">
+                <Target size={26} className="text-rose-love stroke-[2.5]" />
+                Job Scraper
               </h1>
               <span className="inline-flex items-center justify-center px-2.5 py-1 text-[10px] font-black tracking-widest uppercase bg-rose-love/15 text-rose-love border-2 border-rose-border rounded-none shadow-[2px_2px_0px_0px_var(--color-shadow)]">
                 Beta
@@ -563,7 +578,12 @@ export function ScraperDashboard() {
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin bg-rose-base/20">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin bg-rose-base/20"
+            >
               {jobs.length === 0 ? (
                 <div className="py-16 px-4 text-center">
                   <div
@@ -578,7 +598,9 @@ export function ScraperDashboard() {
                 jobs.map((job) => {
                   const isSelected = selectedJobId === job.id;
                   return (
-                    <div
+                    <motion.div
+                      layout
+                      variants={itemVariants}
                       key={job.id}
                       className={`group flex flex-col gap-2 p-3.5 cursor-pointer border-2 transition-all duration-150 relative overflow-hidden ${
                         isSelected
@@ -629,13 +651,13 @@ export function ScraperDashboard() {
 
                         <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold text-rose-muted">
                           {job.location && (
-                            <span className="flex items-center gap-0.5">
-                              📍 {job.location}
+                            <span className="flex items-center gap-1">
+                              <MapPin size={10} className="stroke-[2.5]" /> {job.location}
                             </span>
                           )}
                           {job.use_ai_matching && (
-                            <span className="text-rose-love font-black uppercase tracking-wider text-[8px] flex items-center gap-0.5 bg-rose-love/5 px-1 border border-rose-love/15">
-                              ✨ AI filter
+                            <span className="text-rose-love font-black uppercase tracking-wider text-[8px] flex items-center gap-1 bg-rose-love/5 px-1 border border-rose-love/15">
+                              <Sparkles size={8} className="stroke-[2.5]" /> AI filter
                             </span>
                           )}
                         </div>
@@ -647,15 +669,20 @@ export function ScraperDashboard() {
                           <span className={`w-1.5 h-1.5 rounded-none ${job.result_count > 0 ? "bg-rose-foam animate-pulse" : "bg-rose-hl-med"}`} />
                           <span className="text-rose-text font-black">{job.result_count}</span> profiles
                         </span>
-                        <span className="font-bold text-[9px] uppercase tracking-wide text-rose-muted/80">
-                          {formatDate(job.created_at)}
-                        </span>
+                        <div className="flex flex-col items-end gap-0.5 text-right font-bold text-[9px] uppercase tracking-wide text-rose-muted/80 leading-normal">
+                          <span>{formatDate(job.created_at)}</span>
+                          {job.duration !== undefined && job.duration !== null && (
+                            <span className="text-rose-pine/80 font-mono tracking-tight lowercase flex items-center gap-0.5 justify-end">
+                              <Clock size={9} className="stroke-[2.5]" /> {formatDuration(job.duration)}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })
               )}
-            </div>
+            </motion.div>
           </div>
         </motion.div>
 
@@ -692,7 +719,7 @@ export function ScraperDashboard() {
               </motion.div>
             ) : (
               <motion.div
-                key="results"
+                key={`results-${selectedJobId}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
@@ -766,12 +793,12 @@ export function ScraperDashboard() {
                     </h2>
                     
                     <div className="flex flex-wrap items-center gap-2 mt-3 pl-1.5">
-                      <span className="inline-flex items-center text-[9px] font-black px-2 py-1 bg-rose-overlay border border-rose-hl-med text-rose-text uppercase tracking-wide">
-                        🔍 Query: {selectedJob?.keywords || "Auto Matching"}
+                      <span className="inline-flex items-center gap-1 text-[9px] font-black px-2 py-1 bg-rose-overlay border border-rose-hl-med text-rose-text uppercase tracking-wide">
+                        <Search size={10} className="stroke-[2.5]" /> Query: {selectedJob?.keywords || "Auto Matching"}
                       </span>
                       {selectedJob?.location && (
-                        <span className="inline-flex items-center text-[9px] font-black px-2 py-1 bg-rose-overlay border border-rose-hl-med text-rose-text uppercase tracking-wide">
-                          📍 Loc: {selectedJob.location}
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-2 py-1 bg-rose-overlay border border-rose-hl-med text-rose-text uppercase tracking-wide">
+                          <MapPin size={10} className="stroke-[2.5]" /> Loc: {selectedJob.location}
                         </span>
                       )}
                       {selectedJob?.use_ai_matching !== undefined && (
@@ -783,14 +810,19 @@ export function ScraperDashboard() {
                           AI Filter: {selectedJob.use_ai_matching ? 'Active' : 'Off'}
                         </span>
                       )}
-                      {selectedJob?.freshness && (
-                        <span className="inline-flex items-center text-[9px] font-black px-2 py-1 bg-rose-overlay border border-rose-hl-med text-rose-text uppercase tracking-wide">
-                          ⏱ {selectedJob.freshness.replace('past_', 'Past ')}
+                      {selectedJob?.freshness && selectedJob.freshness !== "any" && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-2 py-1 bg-rose-overlay border border-rose-hl-med text-rose-text uppercase tracking-wide">
+                          <Clock size={10} className="stroke-[2.5]" /> {selectedJob.freshness.replace('past_', 'Past ').replace('24h', '24 Hours')}
                         </span>
                       )}
-                      {selectedJob?.company_size && (
-                        <span className="inline-flex items-center text-[9px] font-black px-2 py-1 bg-rose-overlay border border-rose-hl-med text-rose-text uppercase tracking-wide">
-                          👥 {selectedJob.company_size} emp
+                      {selectedJob?.duration !== undefined && selectedJob.duration !== null && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-2 py-1 bg-rose-overlay border border-rose-hl-med text-rose-text uppercase tracking-wide">
+                          <Clock size={10} className="stroke-[2.5]" /> Duration: {formatDuration(selectedJob.duration)}
+                        </span>
+                      )}
+                      {selectedJob?.company_size && selectedJob.company_size !== "any" && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black px-2 py-1 bg-rose-overlay border border-rose-hl-med text-rose-text uppercase tracking-wide">
+                          <Users size={10} className="stroke-[2.5]" /> {selectedJob.company_size} emp
                         </span>
                       )}
                     </div>
@@ -826,23 +858,23 @@ export function ScraperDashboard() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="border-2 border-rose-border bg-rose-surface p-4 relative overflow-hidden shadow-[3px_3px_0px_0px_var(--color-shadow)] group hover:shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all duration-150">
                       <span className="absolute top-0 left-0 bottom-0 w-[3px] bg-rose-iris" />
-                      <span className="absolute top-2 right-2.5 text-base opacity-15 group-hover:opacity-35 transition-opacity select-none">🔍</span>
+                      <Search size={16} className="absolute top-2.5 right-3 text-rose-iris opacity-15 group-hover:opacity-35 transition-opacity select-none" />
                       <div className="text-[8px] font-black uppercase text-rose-muted tracking-wider pl-1">Discovered</div>
                       <div className="text-3xl font-black text-rose-iris mt-0.5 font-mono pl-1">{resultsData.count}</div>
                       <div className="text-[8px] text-rose-muted font-bold pl-1 mt-0.5 uppercase tracking-wide">job postings</div>
                     </div>
                     <div className="border-2 border-rose-border bg-rose-surface p-4 relative overflow-hidden shadow-[3px_3px_0px_0px_var(--color-shadow)] group hover:shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all duration-150">
                       <span className="absolute top-0 left-0 bottom-0 w-[3px] bg-rose-pine" />
-                      <span className="absolute top-2 right-2.5 text-base opacity-15 group-hover:opacity-35 transition-opacity select-none">👤</span>
+                      <User size={16} className="absolute top-2.5 right-3 text-rose-pine opacity-15 group-hover:opacity-35 transition-opacity select-none" />
                       <div className="text-[8px] font-black uppercase text-rose-muted tracking-wider pl-1">Recruiters</div>
                       <div className="text-3xl font-black text-rose-pine mt-0.5 font-mono pl-1">
-                        {resultsData.contacts.filter(c => c.name && c.name !== "Hiring Manager").length}
+                         {resultsData.contacts.filter(c => c.name && c.name !== "Hiring Manager").length}
                       </div>
                       <div className="text-[8px] text-rose-muted font-bold pl-1 mt-0.5 uppercase tracking-wide">with direct contacts</div>
                     </div>
                     <div className="border-2 border-rose-border bg-rose-surface p-4 relative overflow-hidden shadow-[3px_3px_0px_0px_var(--color-shadow)] group hover:shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all duration-150">
                       <span className="absolute top-0 left-0 bottom-0 w-[3px] bg-rose-foam" />
-                      <span className="absolute top-2 right-2.5 text-base opacity-15 group-hover:opacity-35 transition-opacity select-none">📧</span>
+                      <Mail size={16} className="absolute top-2.5 right-3 text-rose-foam opacity-15 group-hover:opacity-35 transition-opacity select-none" />
                       <div className="text-[8px] font-black uppercase text-rose-muted tracking-wider pl-1">Emails</div>
                       <div className="text-3xl font-black text-rose-foam mt-0.5 font-mono pl-1">
                         {resultsData.contacts.filter(c => c.email && !c.email.startsWith("careers@") && !c.email.startsWith("hr@")).length}
@@ -851,7 +883,7 @@ export function ScraperDashboard() {
                     </div>
                     <div className="border-2 border-rose-border bg-rose-surface p-4 relative overflow-hidden shadow-[3px_3px_0px_0px_var(--color-shadow)] group hover:shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all duration-150">
                       <span className="absolute top-0 left-0 bottom-0 w-[3px] bg-rose-gold" />
-                      <span className="absolute top-2 right-2.5 text-base opacity-15 group-hover:opacity-35 transition-opacity select-none">🎯</span>
+                      <Target size={16} className="absolute top-2.5 right-3 text-rose-gold opacity-15 group-hover:opacity-35 transition-opacity select-none" />
                       <div className="text-[8px] font-black uppercase text-rose-muted tracking-wider pl-1">Campaign</div>
                       <div className="text-sm font-black text-rose-gold mt-1.5 truncate pl-1" title={campaigns.find(c => c.id === selectedJob?.campaign_id)?.name || "Default Outbox"}>
                         {campaigns.find(c => c.id === selectedJob?.campaign_id)?.name || "Default Outbox"}
@@ -877,14 +909,13 @@ export function ScraperDashboard() {
                   </div>
                 )}
 
-                {/* Tab Switcher - Dossier Style tabs */}
-                <div className="flex border-b-2 border-rose-border">
+                <div className="flex gap-2 border-b-2 border-rose-border pb-0">
                   <button
                     onClick={() => setActiveTab("contacts")}
-                    className={`px-6 py-3 text-[11px] font-black uppercase tracking-wider border-2 border-b-0 border-rose-border mr-1.5 transition-all duration-150 flex items-center gap-2 ${
+                    className={`px-5 py-2.5 text-[11px] font-black uppercase tracking-wider border-2 border-b-0 relative z-10 translate-y-[2px] transition-all duration-150 flex items-center gap-2 ${
                       activeTab === "contacts"
-                        ? "bg-rose-surface text-rose-text relative z-10 translate-y-[2px]"
-                        : "bg-rose-base/40 text-rose-muted hover:text-rose-text border-rose-hl-med"
+                        ? "bg-rose-surface text-rose-pine border-rose-border shadow-[2px_-2px_0px_0px_var(--color-shadow)] font-black"
+                        : "bg-rose-overlay/20 text-rose-muted border-transparent hover:text-rose-text hover:bg-rose-overlay/40"
                     }`}
                   >
                     <User size={13} className="stroke-[2.5]" />
@@ -892,10 +923,10 @@ export function ScraperDashboard() {
                   </button>
                   <button
                     onClick={() => setActiveTab("recruiter")}
-                    className={`px-6 py-3 text-[11px] font-black uppercase tracking-wider border-2 border-b-0 border-rose-border transition-all duration-150 flex items-center gap-2 ${
+                    className={`px-5 py-2.5 text-[11px] font-black uppercase tracking-wider border-2 border-b-0 relative z-10 translate-y-[2px] transition-all duration-150 flex items-center gap-2 ${
                       activeTab === "recruiter"
-                        ? "bg-rose-surface text-rose-text relative z-10 translate-y-[2px]"
-                        : "bg-rose-base/40 text-rose-muted hover:text-rose-text border-rose-hl-med"
+                        ? "bg-rose-surface text-rose-pine border-rose-border shadow-[2px_-2px_0px_0px_var(--color-shadow)] font-black"
+                        : "bg-rose-overlay/20 text-rose-muted border-transparent hover:text-rose-text hover:bg-rose-overlay/40"
                     }`}
                   >
                     <Briefcase size={13} className="stroke-[2.5]" />
@@ -983,7 +1014,7 @@ export function ScraperDashboard() {
                         <span className="text-[10px] font-black uppercase text-rose-muted tracking-wider mr-1">Active Filters:</span>
                         {hasEmailFilter && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-rose-pine/15 text-rose-pine border border-rose-pine/35 px-2 py-0.5 rounded-none shadow-[1px_1px_0px_0px_var(--color-shadow)]">
-                            📧 Has Email
+                            <Mail size={10} className="stroke-[2.5]" /> Has Email
                             <button onClick={() => { setHasEmailFilter(false); setCurrentPage(1); }} className="hover:text-rose-love ml-0.5 transition-colors">
                               <X size={10} className="stroke-[3]" />
                             </button>
@@ -991,7 +1022,7 @@ export function ScraperDashboard() {
                         )}
                         {hasRecruiterFilter && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-rose-iris/15 text-rose-iris border border-rose-iris/35 px-2 py-0.5 rounded-none shadow-[1px_1px_0px_0px_var(--color-shadow)]">
-                            💼 Has Recruiter
+                            <Briefcase size={10} className="stroke-[2.5]" /> Has Recruiter
                             <button onClick={() => { setHasRecruiterFilter(false); setCurrentPage(1); }} className="hover:text-rose-love ml-0.5 transition-colors">
                               <X size={10} className="stroke-[3]" />
                             </button>
@@ -999,7 +1030,7 @@ export function ScraperDashboard() {
                         )}
                         {locationFilter && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-rose-gold/15 text-rose-gold border border-rose-gold/35 px-2 py-0.5 rounded-none shadow-[1px_1px_0px_0px_var(--color-shadow)]">
-                            📍 Loc: {locationFilter}
+                            <MapPin size={10} className="stroke-[2.5]" /> Loc: {locationFilter}
                             <button onClick={() => { setLocationFilter(""); setCurrentPage(1); }} className="hover:text-rose-love ml-0.5 transition-colors">
                               <X size={10} className="stroke-[3]" />
                             </button>
@@ -1007,7 +1038,7 @@ export function ScraperDashboard() {
                         )}
                         {salaryFilter && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-rose-rose/15 text-rose-rose border border-rose-rose/35 px-2 py-0.5 rounded-none shadow-[1px_1px_0px_0px_var(--color-shadow)]">
-                            💰 Salary: {salaryFilter}
+                            <DollarSign size={10} className="stroke-[2.5]" /> Salary: {salaryFilter}
                             <button onClick={() => { setSalaryFilter(""); setCurrentPage(1); }} className="hover:text-rose-love ml-0.5 transition-colors">
                               <X size={10} className="stroke-[3]" />
                             </button>
@@ -1121,8 +1152,16 @@ export function ScraperDashboard() {
                     )}
                   </AnimatePresence>
 
-                  {activeTab === "contacts" ? (
-                    <div className="overflow-x-auto min-h-[400px] relative">
+                  <AnimatePresence mode="wait">
+                    {activeTab === "contacts" ? (
+                      <motion.div
+                        key="contacts-tab"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-x-auto min-h-[400px] relative"
+                      >
                       {isResultsLoading && !resultsData && (
                         <div className="absolute inset-0 bg-rose-surface/50 backdrop-blur-none z-10 flex items-center justify-center">
                           <div className="bg-rose-surface p-4 rounded-none border-2 border-rose-border flex items-center gap-3 shadow-[4px_4px_0px_0px_var(--color-shadow)]">
@@ -1209,7 +1248,7 @@ export function ScraperDashboard() {
                                       {c.name && c.name !== "Hiring Manager" && c.email && c.job_title && (
                                         <div className="mt-1.5">
                                           <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-rose-pine bg-rose-pine/10 px-1.5 py-0.5 border border-rose-pine/30">
-                                            🎯 Recruiter for: {c.job_title}
+                                            <Target size={10} className="stroke-[2.5]" /> Recruiter for: {c.job_title}
                                           </span>
                                         </div>
                                       )}
@@ -1219,16 +1258,16 @@ export function ScraperDashboard() {
                                         {c.company || "Unknown"}
                                       </span>
                                       {c.location && (
-                                        <div className="text-[10px] text-rose-muted mt-1 font-bold">
-                                          📍 {c.location}
+                                        <div className="text-[10px] text-rose-muted mt-1 font-bold flex items-center gap-0.5">
+                                          <MapPin size={10} className="stroke-[2.5]" /> {c.location}
                                         </div>
                                       )}
                                     </td>
                                     <td className="py-4">
                                       <div className="text-rose-muted text-xs font-extrabold max-w-[200px] truncate">{c.job_title || "—"}</div>
                                       {c.salary && (
-                                        <div className="text-[10px] text-rose-pine font-bold mt-1">
-                                          💰 {c.salary}
+                                        <div className="text-[10px] text-rose-pine font-bold mt-1 flex items-center gap-0.5">
+                                          <DollarSign size={10} className="stroke-[2.5]" /> {c.salary}
                                         </div>
                                       )}
                                     </td>
@@ -1255,9 +1294,16 @@ export function ScraperDashboard() {
                           </table>
                         )
                       )}
-                    </div>
-                  ) : (
-                    <div className="p-4 min-h-[400px] relative bg-rose-base/10 overflow-y-auto max-h-[600px]">
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="recruiter-tab"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
+                        className="p-4 min-h-[400px] relative bg-rose-base/10 overflow-y-auto max-h-[600px]"
+                      >
                       {isResultsLoading && !resultsData && (
                         <div className="absolute inset-0 bg-rose-surface/50 backdrop-blur-none z-10 flex items-center justify-center">
                           <div className="bg-rose-surface p-4 rounded-none border-2 border-rose-border flex items-center gap-3 shadow-[4px_4px_0px_0px_var(--color-shadow)]">
@@ -1343,18 +1389,18 @@ export function ScraperDashboard() {
                                               {c.company || "Unknown Company"}
                                             </span>
                                             {c.posted_date && (
-                                              <span className="inline-block text-[9px] font-bold text-rose-muted">
-                                                ⏱ {c.posted_date}
+                                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-rose-muted">
+                                                <Clock size={9} className="stroke-[2.5]" /> {c.posted_date}
                                               </span>
                                             )}
                                             {c.location && (
-                                              <span className="inline-block text-[9px] font-bold text-rose-muted">
-                                                📍 {c.location}
+                                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-rose-muted">
+                                                <MapPin size={9} className="stroke-[2.5]" /> {c.location}
                                               </span>
                                             )}
                                             {c.salary && (
-                                              <span className="inline-block text-[9px] font-bold text-rose-pine bg-rose-pine/5 px-1.5 border border-rose-pine/20">
-                                                💰 {c.salary}
+                                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-rose-pine bg-rose-pine/5 px-1.5 border border-rose-pine/20">
+                                                <DollarSign size={9} className="stroke-[2.5]" /> {c.salary}
                                               </span>
                                             )}
                                           </div>
@@ -1550,8 +1596,9 @@ export function ScraperDashboard() {
                           </div>
                         )
                       )}
-                    </div>
-                  )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Pagination */}
                   {resultsData && totalPages > 1 && (

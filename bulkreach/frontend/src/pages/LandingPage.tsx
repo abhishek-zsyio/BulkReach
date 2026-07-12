@@ -586,17 +586,17 @@ export function LandingPage() {
             </motion.p>
             <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-center gap-3">
               {[
-                { name: "React + TypeScript", icon: "⚛️" },
-                { name: "Django REST", icon: "🐍" },
-                { name: "Gemini AI", icon: "✨" },
-                { name: "Gmail API", icon: "📬" },
-                { name: "PostgreSQL", icon: "🐘" },
-                { name: "Celery + Redis", icon: "⚡" },
-                { name: "RTK Query", icon: "🔄" },
-                { name: "Framer Motion", icon: "🎬" },
+                { name: "React + TypeScript", icon: <Cpu size={15} className="text-rose-pine" /> },
+                { name: "Django REST", icon: <Database size={15} className="text-rose-pine" /> },
+                { name: "Gemini AI", icon: <Sparkles size={15} className="text-rose-gold" /> },
+                { name: "Gmail API", icon: <Mail size={15} className="text-rose-love" /> },
+                { name: "PostgreSQL", icon: <Database size={15} className="text-rose-iris" /> },
+                { name: "Celery + Redis", icon: <Zap size={15} className="text-rose-gold" /> },
+                { name: "RTK Query", icon: <Rocket size={15} className="text-rose-pine" /> },
+                { name: "Framer Motion", icon: <Layout size={15} className="text-rose-love" /> },
               ].map(({ name, icon }) => (
                 <div key={name} className="flex items-center gap-2 px-4 py-2.5 border-2 border-rose-border bg-rose-surface text-sm font-bold text-rose-text hover:bg-rose-overlay hover:-translate-y-0.5 transition-all duration-200 cursor-default">
-                  <span>{icon}</span> {name}
+                  {icon} {name}
                 </div>
               ))}
             </motion.div>

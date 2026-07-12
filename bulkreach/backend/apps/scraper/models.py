@@ -48,6 +48,7 @@ class ScrapeJob(models.Model):
     freshness = models.CharField(max_length=20, default="any")
     company_size = models.CharField(max_length=20, default="any")
     created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -117,6 +118,7 @@ class CompanyEnrichment(models.Model):
     )
     error_message = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

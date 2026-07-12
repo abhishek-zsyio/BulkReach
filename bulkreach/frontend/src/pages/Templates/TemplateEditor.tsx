@@ -426,13 +426,14 @@ export function TemplateEditor() {
           <div className="flex items-center border-b-2 border-rose-border bg-rose-hl-low shrink-0">
             <button
               onClick={() => setRightTab("preview")}
-              className={`px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider border-r-2 border-rose-border transition-all ${
+              className={`px-5 py-3 text-[10px] font-extrabold uppercase tracking-wider border-r-2 border-rose-border transition-all flex items-center gap-1.5 ${
                 rightTab === "preview"
                   ? "text-rose-pine bg-rose-surface"
                   : "text-rose-muted hover:text-rose-text hover:bg-rose-hl-low"
               }`}
             >
-              📧 Live Preview
+              <Mail size={12} className="stroke-[2.5]" />
+              Live Preview
             </button>
             <button
               onClick={() => setRightTab("spam")}
@@ -442,7 +443,8 @@ export function TemplateEditor() {
                   : "text-rose-muted hover:text-rose-text hover:bg-rose-hl-low"
               }`}
             >
-              🛡️ Spam Check
+              <Shield size={12} className="stroke-[2.5]" />
+              Spam Check
             </button>
           </div>
 

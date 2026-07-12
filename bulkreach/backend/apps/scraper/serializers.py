@@ -20,6 +20,7 @@ class ScrapeJobSerializer(serializers.ModelSerializer):
 
     platform_display = serializers.CharField(source="get_platform_display", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
+    duration = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ScrapeJob
@@ -28,13 +29,20 @@ class ScrapeJobSerializer(serializers.ModelSerializer):
             "keywords", "location", "max_results",
             "status", "status_display",
             "result_count", "error_message",
-            "celery_task_id", "use_ai_matching", "freshness", "company_size", "created_at", "completed_at",
+            "celery_task_id", "use_ai_matching", "freshness", "company_size", "created_at", "completed_at", "duration",
         ]
         read_only_fields = [
             "id", "status", "status_display", "platform_display",
             "result_count", "error_message", "celery_task_id",
-            "created_at", "completed_at",
+            "created_at", "completed_at", "duration",
         ]
+
+    def get_duration(self, obj):
+        start_time = getattr(obj, "started_at", None) or obj.created_at
+        if start_time and obj.completed_at:
+            delta = obj.completed_at - start_time
+            return int(delta.total_seconds())
+        return None
 
 
 class ScrapeJobCreateSerializer(serializers.Serializer):
@@ -86,6 +94,7 @@ class CompanyEnrichmentSerializer(serializers.ModelSerializer):
 
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     employees = CompanyEmployeeSerializer(many=True, read_only=True)
+    duration = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CompanyEnrichment
@@ -103,6 +112,7 @@ class CompanyEnrichmentSerializer(serializers.ModelSerializer):
             "error_message",
             "created_at",
             "completed_at",
+            "duration",
             "employees",
         ]
         read_only_fields = [
@@ -118,8 +128,16 @@ class CompanyEnrichmentSerializer(serializers.ModelSerializer):
             "error_message",
             "created_at",
             "completed_at",
+            "duration",
             "employees",
         ]
+
+    def get_duration(self, obj):
+        start_time = getattr(obj, "started_at", None) or obj.created_at
+        if start_time and obj.completed_at:
+            delta = obj.completed_at - start_time
+            return int(delta.total_seconds())
+        return None
 
 
 class CompanyEnrichmentCreateSerializer(serializers.Serializer):

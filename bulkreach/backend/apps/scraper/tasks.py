@@ -179,7 +179,8 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
                 raise ValueError("Keywords missing and no AI setup to auto-generate.")
 
         job.status = ScrapeJob.Status.RUNNING
-        job.save(update_fields=["status"])
+        job.started_at = timezone.now()
+        job.save(update_fields=["status", "started_at"])
 
         # ── Gather context once ─────────────────────────────────────────────
         resume_text = (
@@ -225,40 +226,47 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
         status = ScrapeJob.Status.DONE
         error_msg = ""
 
-        if len(contacts) == 0 and job.platform != ScrapeJob.Platform.WEB:
-            logger.info("Scraper for %s returned 0 results. Falling back to WebScraper.", job.platform)
+        if len(contacts) < 3 and job.platform != ScrapeJob.Platform.WEB:
+            logger.info("Scraper for %s returned only %d results. Falling back to WebScraper.", job.platform, len(contacts))
             fallback_scraper = WebScraper()
             try:
-                contacts = fallback_scraper.scrape(
+                fallback_results = fallback_scraper.scrape(
                     keywords=search_keywords,
                     location=job.location,
                     max_results=job.max_results,
                 )
 
-                if contacts:
+                if fallback_results:
                     # Filter fallback contacts by freshness limit
                     if freshness_limit and freshness_limit != "any":
-                        contacts = [c for c in contacts if _matches_freshness(c.get("posted_date"), freshness_limit)]
-                    error_msg = (
-                        f"{direct_error}. Fell back to DuckDuckGo Web Search to find matching listings."
-                        if direct_error
-                        else (
-                            f"No direct results found on {job.platform.title()} "
-                            f"(blocked by anti-bot or restrictive settings). "
-                            f"Fell back to DuckDuckGo Web Search to find matching listings."
+                        fallback_results = [c for c in fallback_results if _matches_freshness(c.get("posted_date"), freshness_limit)]
+                    
+                    # Deduplicate: don't add fallback URLs that are already in contacts
+                    seen_urls = {c.get("source_url") for c in contacts if c.get("source_url")}
+                    fallback_results = [r for r in fallback_results if r.get("source_url") not in seen_urls]
+                    
+                    if fallback_results:
+                        error_msg = (
+                            f"{direct_error}. Fell back to DuckDuckGo Web Search to find matching listings."
+                            if direct_error
+                            else (
+                                f"Only {len(contacts)} direct results found on {job.platform.title()} "
+                                f"(blocked by anti-bot or restrictive settings). "
+                                f"Fell back to DuckDuckGo Web Search to find matching listings."
+                            )
                         )
-                    )
 
-                    # Re-run AI matching on fallback contacts
-                    job_matches = _run_ai_matching(
-                        gemini_api_key, resume_text, contacts, campaign_variables, job
-                    )
-                    fallback_bulk = _process_contacts(
-                        contacts, job, gemini_api_key, resume_text, campaign_variables, job_matches
-                    )
-                    if fallback_bulk:
-                        ScrapedContact.objects.bulk_create(fallback_bulk)
-                    bulk_contacts.extend(fallback_bulk)
+                        # Re-run AI matching on fallback contacts
+                        job_matches = _run_ai_matching(
+                            gemini_api_key, resume_text, fallback_results, campaign_variables, job
+                        )
+                        fallback_bulk = _process_contacts(
+                            fallback_results, job, gemini_api_key, resume_text, campaign_variables, job_matches
+                        )
+                        if fallback_bulk:
+                            ScrapedContact.objects.bulk_create(fallback_bulk)
+                        bulk_contacts.extend(fallback_bulk)
+                        contacts.extend(fallback_results)
 
             except Exception as fallback_exc:
                 logger.error("Fallback WebScraper failed for job %s: %s", scrape_job_id, fallback_exc)
@@ -441,7 +449,8 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
 
     try:
         enrichment.status = CompanyEnrichment.Status.RUNNING
-        enrichment.save(update_fields=["status"])
+        enrichment.started_at = timezone.now()
+        enrichment.save(update_fields=["status", "started_at"])
 
         user = enrichment.user
         api_key = getattr(user, "gemini_api_key", "")

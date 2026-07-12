@@ -14,12 +14,12 @@ export interface ScrapeJob {
   celery_task_id: string | null;
   created_at: string;
   completed_at: string | null;
+  duration?: number | null;
   use_ai_matching?: boolean;
   campaign_id?: number;
   freshness?: string;
   company_size?: string;
 }
-
 export interface ScrapedContact {
   id: number;
   name: string;
@@ -67,6 +67,7 @@ export interface CompanyEnrichment {
   error_message: string | null;
   created_at: string;
   completed_at: string | null;
+  duration?: number | null;
   employees: CompanyEmployee[];
 }
 
