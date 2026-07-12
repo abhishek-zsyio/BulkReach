@@ -613,3 +613,132 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
         enrichment.save()
         return {"error": str(exc)}
 
+
+@shared_task(
+    bind=True,
+    max_retries=2,
+    queue="scraping",
+    name="scraper.run_profile_research",
+)
+def run_profile_research(self, profile_research_id: int) -> dict:
+    from apps.scraper.models import ProfileResearch
+    from google import genai
+    from google.genai import types
+    from pydantic import BaseModel, Field
+    from typing import List, Optional
+    import json
+
+    class ProfileDetailsSchema(BaseModel):
+        name: Optional[str] = Field(default=None, description="Full Name of the person")
+        job_title: Optional[str] = Field(default=None, description="Job title / role")
+        company: Optional[str] = Field(default=None, description="Current company name")
+        email: Optional[str] = Field(default=None, description="Guessed or estimated professional email format (e.g. first.last@company.com or careers@company.com)")
+        phone_number: Optional[str] = Field(default=None, description="Phone number if publicly available, or null")
+        location: Optional[str] = Field(default=None, description="Location/City/Country")
+        summary: Optional[str] = Field(default=None, description="Short professional summary of their background")
+        skills: List[str] = Field(default=[], description="Key skills list")
+        interests: List[str] = Field(default=[], description="Subjects, projects, technologies, or topics this person is likely interested in based on their profile")
+        connection_message: str = Field(..., description="LinkedIn connection request message, strictly under 300 characters, personalized to their focus and friendly.")
+        outreach_message: str = Field(..., description="Personalized outreach message (email body) based on their professional background, mentioning specific things they are interested in.")
+
+    try:
+        research = ProfileResearch.objects.get(pk=profile_research_id)
+    except ProfileResearch.DoesNotExist:
+        logger.error("ProfileResearch %s not found.", profile_research_id)
+        return {"error": "ProfileResearch not found."}
+
+    try:
+        research.status = ProfileResearch.Status.RUNNING
+        research.started_at = timezone.now()
+        research.save(update_fields=["status", "started_at"])
+
+        user = research.user
+        api_key = getattr(user, "gemini_api_key", "")
+        if not api_key:
+            raise ValueError("Gemini API key is required. Please set it in Settings.")
+
+        client = genai.Client(api_key=api_key)
+        profile_url = research.profile_url
+
+        # Parse url parts for better search query
+        # e.g. https://www.linkedin.com/in/priya-sharma-developer/ -> priya sharma developer
+        url_clean = profile_url.rstrip('/')
+        url_slug = url_clean.split('/')[-1].replace('-', ' ')
+
+        logger.info("Searching search engine for public profile info for: %s", url_slug)
+        search_query = f'"{url_slug}" site:linkedin.com/in OR "{url_slug}" resume portfolio'
+        search_results = _perform_web_search(search_query, max_results=5)
+        
+        search_text = ""
+        if search_results:
+            search_text = "\n".join([f"Title: {r.get('title')}\nSnippet: {r.get('snippet')}" for r in search_results])
+
+        # Candidate resume context
+        resume_text = getattr(user, "resume_text", "")
+
+        prompt = f"""
+You are an expert AI recruiter and personal profiler.
+I will give you a public profile URL and any public web search snippets gathered about this person.
+
+Profile URL: {profile_url}
+Search Snippets:
+{search_text}
+
+Candidate Resume (use this to tailor the connection/outreach request so it bridges the gap between candidate background and the prospect's interests):
+{resume_text}
+
+Task:
+1. Extract the person's professional details (Name, Job Title, Company, Location, Summary, Skills).
+2. Guess/synthesize a professional email address (using the company name to formulate standard formats like first.last@company.com, or check snippets).
+3. Identify a list of 3-5 interests or topics they care about (technologies, methodologies, industries).
+4. Generate:
+   - A highly personalized LinkedIn Connection Message that is strictly under 300 characters, including spaces, explaining why you want to connect.
+   - A personalized outreach message (email body) addressing their specific interests.
+
+Respond ONLY with a valid JSON representation matching the requested schema.
+"""
+        model_name = getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
+        
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=ProfileDetailsSchema,
+            )
+        )
+
+        data = json.loads(response.text)
+
+        research.name = (data.get("name") or "").strip() or url_slug.title()
+        research.job_title = (data.get("job_title") or "").strip()
+        research.company = (data.get("company") or "").strip()
+        research.email = (data.get("email") or "").strip()
+        research.phone_number = (data.get("phone_number") or "").strip()
+        research.location = (data.get("location") or "").strip()
+        research.summary = (data.get("summary") or "").strip()
+        research.skills = data.get("skills") or []
+        research.interests = data.get("interests") or []
+        
+        conn_msg = data.get("connection_message") or ""
+        # Guarantee connection message is under 300 characters
+        if len(conn_msg) > 295:
+            conn_msg = conn_msg[:290] + "..."
+        research.connection_message = conn_msg.strip()
+        research.outreach_message = (data.get("outreach_message") or "").strip()
+
+        research.status = ProfileResearch.Status.DONE
+        research.completed_at = timezone.now()
+        research.save()
+
+        return {"success": True, "name": research.name}
+
+    except Exception as exc:
+        logger.error("Profile research %s failed: %s", profile_research_id, exc)
+        research.status = ProfileResearch.Status.FAILED
+        research.error_message = str(exc)[:1000]
+        research.completed_at = timezone.now()
+        research.save()
+        return {"error": str(exc)}
+
+

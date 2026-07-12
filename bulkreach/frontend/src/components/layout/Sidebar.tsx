@@ -14,6 +14,7 @@ import {
   Building2,
   Kanban,
   X,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/utils/helpers";
 
@@ -24,6 +25,7 @@ const navItems = [
   { to: "/resumes", icon: FileText, label: "Resumes" },
   { to: "/scraper", icon: ScanSearch, label: "Job Scraper" },
   { to: "/company-research", icon: Building2, label: "Company Research" },
+  { to: "/profile-research", icon: UserCheck, label: "Profile Research" },
   { to: "/tracker", icon: Kanban, label: "Tracker" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
@@ -51,6 +53,7 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
       case "Resumes":         return "group-hover:rotate-6 group-hover:scale-110";
       case "Job Scraper":     return "group-hover:scale-110 group-hover:rotate-12";
       case "Company Research":return "group-hover:scale-110 group-hover:-rotate-6";
+      case "Profile Research":return "group-hover:scale-110 group-hover:rotate-6";
       case "Tracker":         return "group-hover:scale-110 group-hover:rotate-6";
       case "Settings":        return "group-hover:rotate-45 group-hover:scale-110";
       default:                return "group-hover:scale-110";

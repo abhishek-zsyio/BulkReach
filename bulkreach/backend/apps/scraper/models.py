@@ -154,3 +154,47 @@ class CompanyEmployee(models.Model):
     def __str__(self):
         return f"{self.name} - {self.job_title} @ {self.company.company_name}"
 
+
+class ProfileResearch(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        RUNNING = "running", "Running"
+        DONE = "done", "Done"
+        FAILED = "failed", "Failed"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile_researches")
+    profile_url = models.CharField(max_length=500)
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    
+    name = models.CharField(max_length=255, blank=True)
+    job_title = models.CharField(max_length=255, blank=True)
+    company = models.CharField(max_length=255, blank=True)
+    email = models.CharField(max_length=255, blank=True)
+    phone_number = models.CharField(max_length=50, blank=True)
+    location = models.CharField(max_length=255, blank=True)
+    summary = models.TextField(blank=True)
+    skills = models.JSONField(default=list, blank=True)
+    interests = models.JSONField(default=list, blank=True)
+    
+    connection_message = models.TextField(blank=True)
+    outreach_message = models.TextField(blank=True)
+    
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Profile Research"
+        verbose_name_plural = "Profile Researches"
+
+    def __str__(self):
+        return f"{self.profile_url} ({self.status})"
+
+

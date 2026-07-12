@@ -42,6 +42,30 @@ export interface ScrapeJobResults {
 
 export type CompanyEnrichmentStatus = "pending" | "running" | "done" | "failed";
 
+export type ProfileResearchStatus = "pending" | "running" | "done" | "failed";
+
+export interface ProfileResearch {
+  id: number;
+  profile_url: string;
+  status: ProfileResearchStatus;
+  name: string;
+  job_title: string;
+  company: string;
+  email: string;
+  phone_number: string;
+  location: string;
+  summary: string;
+  skills: string[];
+  interests: string[];
+  connection_message: string;
+  outreach_message: string;
+  error_message: string | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  duration?: number | null;
+}
+
 export interface CompanyEmployee {
   id: number;
   name: string;

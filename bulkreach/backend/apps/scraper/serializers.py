@@ -1,6 +1,6 @@
 """Scraper app — DRF serializers (Phase 2)."""
 from rest_framework import serializers
-from .models import ScrapeJob, ScrapedContact, CompanyEnrichment, CompanyEmployee
+from .models import ScrapeJob, ScrapedContact, CompanyEnrichment, CompanyEmployee, ProfileResearch
 
 
 class ScrapedContactSerializer(serializers.ModelSerializer):
@@ -160,4 +160,31 @@ class CompanyImportSerializer(serializers.Serializer):
         required=False,
         default=list,
     )
+
+
+class ProfileResearchSerializer(serializers.ModelSerializer):
+    duration = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProfileResearch
+        fields = [
+            "id", "profile_url", "status", "name", "job_title", "company", "email",
+            "phone_number", "location", "summary", "skills", "interests",
+            "connection_message", "outreach_message", "error_message",
+            "created_at", "started_at", "completed_at", "duration"
+        ]
+        read_only_fields = [
+            "id", "status", "name", "job_title", "company", "email",
+            "phone_number", "location", "summary", "skills", "interests",
+            "connection_message", "outreach_message", "error_message",
+            "created_at", "started_at", "completed_at", "duration"
+        ]
+
+    def get_duration(self, obj):
+        start_time = getattr(obj, "started_at", None) or obj.created_at
+        if start_time and obj.completed_at:
+            delta = obj.completed_at - start_time
+            return int(delta.total_seconds())
+        return None
+
 

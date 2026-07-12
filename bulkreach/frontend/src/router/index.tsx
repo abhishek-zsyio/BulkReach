@@ -22,6 +22,7 @@ const ScraperDashboard = React.lazy(() => import("@/pages/Scraper/ScraperDashboa
 const ResumeList     = React.lazy(() => import("@/pages/Resumes/ResumeList").then(m => ({ default: m.ResumeList })));
 const SettingsPage   = React.lazy(() => import("@/pages/Settings").then(m => ({ default: m.SettingsPage })));
 const CompanyResearch = React.lazy(() => import("@/pages/Scraper/CompanyResearch").then(m => ({ default: m.CompanyResearch })));
+const ProfileResearch   = React.lazy(() => import("@/pages/Scraper/ProfileResearch").then(m => ({ default: m.ProfileResearch })));
 const Tracker         = React.lazy(() => import("@/pages/Tracker").then(m => ({ default: m.Tracker })));
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
@@ -118,6 +119,7 @@ export function AppRouter() {
           <Route path="resumes" element={<ResumeList />} />
           <Route path="scraper" element={<ScraperDashboard />} />
           <Route path="company-research" element={<CompanyResearch />} />
+          <Route path="profile-research" element={<ProfileResearch />} />
           <Route path="tracker" element={<Tracker />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

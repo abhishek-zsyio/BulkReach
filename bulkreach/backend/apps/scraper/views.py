@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import ScrapeJob, ScrapedContact, CompanyEnrichment, CompanyEmployee
+from .models import ScrapeJob, ScrapedContact, CompanyEnrichment, CompanyEmployee, ProfileResearch
 from .serializers import (
     ScrapeJobSerializer,
     ScrapeJobCreateSerializer,
@@ -16,6 +16,7 @@ from .serializers import (
     CompanyEnrichmentSerializer,
     CompanyEnrichmentCreateSerializer,
     CompanyImportSerializer,
+    ProfileResearchSerializer,
 )
 from utils.pagination import StandardResultsPagination
 
@@ -980,4 +981,69 @@ class ScrapedContactBulkDeleteView(APIView):
             "message": f"Successfully deleted {deleted_count} contacts.",
             "deleted_count": deleted_count
         })
+
+
+class ProfileResearchListCreateView(APIView):
+    """
+    GET  /api/scraper/profiles/ — List all profile researches for this user.
+    POST /api/scraper/profiles/ — Start a new profile research task.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        researches = ProfileResearch.objects.filter(user=request.user)
+        serializer = ProfileResearchSerializer(researches, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        profile_url = request.data.get("profile_url", "").strip()
+        if not profile_url:
+            return Response({"profile_url": ["This field is required."]}, status=status.HTTP_400_BAD_REQUEST)
+
+        api_key = getattr(request.user, "gemini_api_key", "")
+        if not api_key:
+            return Response(
+                {"error": "Gemini API key is required. Please set it in Settings to research profiles."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create profile research record
+        research = ProfileResearch.objects.create(
+            user=request.user,
+            profile_url=profile_url,
+            status=ProfileResearch.Status.PENDING
+        )
+
+        # Trigger celery task
+        from apps.scraper.tasks import run_profile_research
+        run_profile_research.delay(research.id)
+
+        return Response(ProfileResearchSerializer(research).data, status=status.HTTP_201_CREATED)
+
+
+class ProfileResearchDetailView(APIView):
+    """
+    GET    /api/scraper/profiles/<id>/ — Get detailed info.
+    DELETE /api/scraper/profiles/<id>/ — Delete the record.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            research = ProfileResearch.objects.get(pk=pk, user=request.user)
+        except ProfileResearch.DoesNotExist:
+            return Response({"error": "Profile research not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProfileResearchSerializer(research)
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        try:
+            research = ProfileResearch.objects.get(pk=pk, user=request.user)
+        except ProfileResearch.DoesNotExist:
+            return Response({"error": "Profile research not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        research.delete()
+        return Response({"success": True, "message": "Profile research deleted successfully."})
+
 

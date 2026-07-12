@@ -1,5 +1,5 @@
 import { baseApi } from "./baseApi";
-import type { ScrapeJob, ScrapeJobResults, CompanyEnrichment } from "@/types/scraper";
+import type { ScrapeJob, ScrapeJobResults, CompanyEnrichment, ProfileResearch } from "@/types/scraper";
 
 export const scraperApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -149,6 +149,25 @@ export const scraperApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["ScrapeJob"],
     }),
+    getProfileResearches: builder.query<ProfileResearch[], void>({
+      query: () => "/scraper/profiles/",
+      providesTags: ["ProfileResearch"],
+    }),
+    createProfileResearch: builder.mutation<ProfileResearch, { profile_url: string }>({
+      query: (body) => ({
+        url: "/scraper/profiles/",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["ProfileResearch"],
+    }),
+    deleteProfileResearch: builder.mutation<{ success: boolean; message: string }, number>({
+      query: (id) => ({
+        url: `/scraper/profiles/${id}/`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["ProfileResearch"],
+    }),
   }),
 });
 
@@ -169,5 +188,8 @@ export const {
   useDeleteCompanyEnrichmentMutation,
   useImportCompanyEmployeesMutation,
   useBulkDeleteScrapedContactsMutation,
+  useGetProfileResearchesQuery,
+  useCreateProfileResearchMutation,
+  useDeleteProfileResearchMutation,
 } = scraperApi;
 

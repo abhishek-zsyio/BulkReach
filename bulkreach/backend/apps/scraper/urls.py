@@ -13,6 +13,8 @@ from .views import (
     CompanyEnrichmentListCreateView,
     CompanyEnrichmentDetailView,
     CompanyEnrichmentImportView,
+    ProfileResearchListCreateView,
+    ProfileResearchDetailView,
 )
 
 urlpatterns = [
@@ -28,5 +30,7 @@ urlpatterns = [
     path("companies/", CompanyEnrichmentListCreateView.as_view(), name="company-enrichment-list-create"),
     path("companies/<int:pk>/", CompanyEnrichmentDetailView.as_view(), name="company-enrichment-detail"),
     path("companies/<int:pk>/import/", CompanyEnrichmentImportView.as_view(), name="company-enrichment-import"),
+    path("profiles/", ProfileResearchListCreateView.as_view(), name="profile-research-list-create"),
+    path("profiles/<int:pk>/", ProfileResearchDetailView.as_view(), name="profile-research-detail"),
 ]
 
