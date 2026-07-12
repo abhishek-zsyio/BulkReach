@@ -215,7 +215,7 @@ def compile_structured_data_to_text(data: dict) -> str:
             text_parts.append(f"- {proj.get('name')} ({proj.get('technologies')})\n  {proj.get('description')}")
     return "\n".join(text_parts)
 
-def parse_resume_text_with_gemini(text: str, api_key: str, model: str = "gemini-3.5-flash") -> dict:
+def parse_resume_text_with_gemini(text: str, api_key: str, model: str = "gemini-2.5-flash") -> dict:
     """
     Calls Gemini API to parse raw resume text into structured JSON format.
     """

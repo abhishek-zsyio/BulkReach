@@ -56,12 +56,12 @@ class UserProfile(AbstractUser):
     )
     gemini_model = models.CharField(
         max_length=50,
-        default="gemini-3.5-flash",
+        default="gemini-2.5-flash",
         blank=True,
         help_text=(
             "Gemini model used for AI tasks. Current options: "
-            "gemini-3.5-flash (recommended), gemini-2.5-flash, "
-            "gemini-2.5-pro, gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro."
+            "gemini-2.5-flash (recommended), gemini-2.5-pro, "
+            "gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro."
         ),
     )
 

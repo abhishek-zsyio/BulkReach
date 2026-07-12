@@ -140,6 +140,8 @@ class CompanyEmployee(models.Model):
     job_title = models.CharField(max_length=255, blank=True)
     linkedin_url = models.URLField(max_length=2000, blank=True)
     email = models.EmailField(blank=True)
+    role_description = models.TextField(blank=True)
+    profile_insights = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

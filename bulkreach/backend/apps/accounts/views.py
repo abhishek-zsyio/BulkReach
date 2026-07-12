@@ -283,7 +283,7 @@ class UserResumeViewSet(viewsets.ModelViewSet):
                         resume.structured_data = parse_resume_text_with_gemini(
                             resume.parsed_text,
                             gemini_api_key,
-                            model=getattr(user, "gemini_model", "gemini-3.5-flash") or "gemini-3.5-flash"
+                            model=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
                         )
                     except Exception as ge:
                         logger.warning("Gemini parsing failed, using local fallback: %s", ge)
@@ -332,7 +332,7 @@ class UserResumeViewSet(viewsets.ModelViewSet):
                 resume.structured_data = parse_resume_text_with_gemini(
                     resume.parsed_text or "",
                     gemini_api_key,
-                    model=getattr(user, "gemini_model", "gemini-3.5-flash") or "gemini-3.5-flash"
+                    model=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
                 )
             except Exception as ge:
                 logger.warning("Gemini parsing failed during re-parse: %s", ge)
@@ -392,7 +392,7 @@ Output the tailored profile in the EXACT same JSON format.
 Ensure the output is clean, valid JSON. Do not wrap it in markdown code blocks like ```json. Just return the raw JSON object.
 """
             response = client.models.generate_content(
-                model=getattr(user, "gemini_model", "gemini-3.5-flash") or "gemini-3.5-flash",
+                model=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash",
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",

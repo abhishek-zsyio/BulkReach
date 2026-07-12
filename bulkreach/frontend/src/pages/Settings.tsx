@@ -67,7 +67,7 @@ export function SettingsPage() {
   const [lastName, setLastName] = useState("");
   const [senderName, setSenderName] = useState("");
   const [geminiApiKey, setGeminiApiKey] = useState("");
-  const [geminiModel, setGeminiModel] = useState("gemini-3.5-flash");
+  const [geminiModel, setGeminiModel] = useState("gemini-2.5-flash");
   
   const [showKey, setShowKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -78,7 +78,7 @@ export function SettingsPage() {
       setFirstName(user.first_name || "");
       setLastName(user.last_name || "");
       setSenderName(user.sender_name || "");
-      setGeminiModel(user.gemini_model || "gemini-3.5-flash");
+      setGeminiModel(user.gemini_model || "gemini-2.5-flash");
     }
   }, [user]);
 
@@ -268,8 +268,7 @@ export function SettingsPage() {
                   onChange={(e) => setGeminiModel(e.target.value)}
                   className="input font-bold"
                 >
-                  <option value="gemini-3.5-flash">Gemini 3.5 Flash (Recommended - Fastest)</option>
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended - Fastest)</option>
                   <option value="gemini-2.5-pro">Gemini 2.5 Pro (Most Powerful Reasoning)</option>
                   <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                   <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>

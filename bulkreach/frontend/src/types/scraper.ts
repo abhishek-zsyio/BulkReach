@@ -48,6 +48,8 @@ export interface CompanyEmployee {
   job_title: string;
   linkedin_url: string;
   email: string;
+  role_description?: string;
+  profile_insights?: string;
   created_at: string;
 }
 

@@ -338,7 +338,7 @@ Guidelines for Placeholders:
 - Keep the tone professional, bold, and modern.
 """
             response = client.models.generate_content(
-                model=getattr(request.user, "gemini_model", "gemini-3.5-flash") or "gemini-3.5-flash",
+                model=getattr(request.user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash",
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",

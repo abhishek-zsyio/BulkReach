@@ -13,7 +13,7 @@ def evaluate_jobs_batch(
     jobs: List[Dict],
     campaign_variables: List[str],
     company_size_filter: str = "any",
-    gemini_model: str = "gemini-3.5-flash"
+    gemini_model: str = "gemini-2.5-flash"
 ) -> Dict[str, Dict]:
     """
     Evaluates a list of jobs against a resume using a single Gemini API call.
@@ -112,7 +112,7 @@ Format:
         raise last_exc
     return {}
 
-def generate_search_keyword(api_key: str, resume_text: str, gemini_model: str = "gemini-3.5-flash") -> str:
+def generate_search_keyword(api_key: str, resume_text: str, gemini_model: str = "gemini-2.5-flash") -> str:
     """
     Generates a single broad search keyword (e.g. 'Frontend Developer') from a resume.
     """

@@ -110,7 +110,7 @@ def _run_ai_matching(gemini_api_key, resume_text, contacts, campaign_variables, 
         contacts, 
         campaign_variables, 
         company_size_filter,
-        gemini_model=getattr(job.user, "gemini_model", "gemini-3.5-flash") or "gemini-3.5-flash"
+        gemini_model=getattr(job.user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
     )
 
 
@@ -171,7 +171,7 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
                 search_keywords = generate_search_keyword(
                     api_key, 
                     resume_text_for_keyword,
-                    gemini_model=getattr(job.user, "gemini_model", "gemini-3.5-flash") or "gemini-3.5-flash"
+                    gemini_model=getattr(job.user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
                 )
                 job.keywords = search_keywords
                 job.save(update_fields=["keywords"])
@@ -427,6 +427,8 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
         job_title: Optional[str] = Field(None, description="Employee Job Title")
         linkedin_url: Optional[str] = Field(None, description="LinkedIn Profile URL")
         email: Optional[str] = Field(None, description="Synthesized Email Address")
+        role_description: Optional[str] = Field(None, description="Detailed role description or focus areas at the company")
+        profile_insights: Optional[str] = Field(None, description="Personalized outreach insights or hooks based on their profile to customize messages")
 
     class EmployeesListSchema(BaseModel):
         employees: List[EmployeeInfoSchema]
@@ -473,7 +475,7 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
         """
 
         response = client.models.generate_content(
-            model=getattr(user, "gemini_model", "gemini-3.5-flash") or "gemini-3.5-flash",
+            model=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash",
             contents=company_prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
@@ -529,7 +531,7 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
         if employee_search_results:
             employee_prompt = f"""
             Analyze the following search results for employees at "{normalized_name}".
-            Your task is to identify and extract the name, job title, and LinkedIn URL of only the employees who match the target job titles or functions.
+            Your task is to identify and extract the name, job title, and LinkedIn URL of only the employees who match the target job titles or functions, and generate outreach insights.
 
             Company: {normalized_name}
             Company Domain: {domain or 'company.com'}
@@ -545,10 +547,12 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
             4. CRITICAL: Only include employees whose job title or role strictly matches or is closely related to the Target Job Titles/Functions: {', '.join(titles_to_use)}. Strictly exclude unrelated roles (e.g., developers, software engineers, sales representatives, marketing executives, designers, QA engineers, founders/owners, etc. unless they are explicitly listed in target titles).
             5. Extract their LinkedIn profile URL.
             6. Predict/synthesize their corporate email address based on their name and the company domain "{domain or 'company.com'}". Use common patterns like first.last@domain.com, ffirstlast@domain.com, or first@domain.com.
+            7. Based on the snippet text and title, extract or infer a brief role description or focus areas (e.g., 'Manages technical recruiting and talent operations', or 'Oversees global human resources and hiring policies').
+            8. Based on their title and role, generate 1-2 brief, actionable outreach insights or hooks (e.g., 'Emphasize engineering matching efficiency and speed when reaching out to this technical recruiter', or 'Focus on senior-level executive placement stats since they manage leadership recruiting').
             """
 
             response2 = client.models.generate_content(
-                model=getattr(user, "gemini_model", "gemini-3.5-flash") or "gemini-3.5-flash",
+                model=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash",
                 contents=employee_prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -572,7 +576,9 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
                         name=name.strip(),
                         job_title=(emp.get("job_title") or "").strip(),
                         linkedin_url=(emp.get("linkedin_url") or "").strip(),
-                        email=(emp.get("email") or "").strip()
+                        email=(emp.get("email") or "").strip(),
+                        role_description=(emp.get("role_description") or "").strip(),
+                        profile_insights=(emp.get("profile_insights") or "").strip()
                     )
                 )
 

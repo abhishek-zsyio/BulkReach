@@ -74,6 +74,8 @@ class CompanyEmployeeSerializer(serializers.ModelSerializer):
             "job_title",
             "linkedin_url",
             "email",
+            "role_description",
+            "profile_insights",
             "created_at",
         ]
         read_only_fields = fields

@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Clock,
   Mail,
+  ChevronDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -132,7 +133,18 @@ export function CompanyResearch() {
   // Import modal
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<Set<number>>(new Set());
+  const [expandedRowIds, setExpandedRowIds] = useState<Set<number>>(new Set());
   const { confirm, modal } = useConfirm();
+
+  const handleToggleRowExpand = (id: number) => {
+    const next = new Set(expandedRowIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setExpandedRowIds(next);
+  };
 
   // Polling
   const [pollInterval, setPollInterval] = useState(0);
@@ -611,7 +623,7 @@ export function CompanyResearch() {
                   )}
 
                   {/* Failed state */}
-                  {!isRunning && selected.status === "failed" && (
+                  {!isRunning && selected.status === "failed" && selected.employees.length === 0 && (
                     <div className="py-14 text-center px-4">
                       <div className="w-12 h-12 bg-rose-love/15 border-2 border-rose-border flex items-center justify-center mx-auto mb-3 text-rose-love">
                         <AlertCircle size={18} />
@@ -627,7 +639,7 @@ export function CompanyResearch() {
                   {selected.employees.length > 0 && (
                     <>
                       {/* Select-all row */}
-                      <div className="grid grid-cols-[20px_32px_1fr_40px] md:grid-cols-[20px_32px_1fr_144px_40px] lg:grid-cols-[20px_32px_1fr_144px_160px_40px] items-center gap-4 px-5 py-2.5 bg-rose-overlay/20 border-b-2 border-rose-hl-low">
+                      <div className="grid grid-cols-[20px_32px_1fr_64px] md:grid-cols-[20px_32px_1fr_144px_64px] lg:grid-cols-[20px_32px_1fr_144px_160px_64px] items-center gap-4 px-5 py-2.5 bg-rose-overlay/20 border-b-2 border-rose-hl-low">
                         <button
                           onClick={() => handleToggleAll(selected.employees)}
                           className="flex items-center text-rose-muted hover:text-rose-text transition-colors"
@@ -643,7 +655,7 @@ export function CompanyResearch() {
                         <span className="text-[10px] text-rose-muted font-bold uppercase tracking-wider">Name</span>
                         <span className="text-[10px] text-rose-muted font-bold uppercase tracking-wider hidden md:block">Title</span>
                         <span className="text-[10px] text-rose-muted font-bold uppercase tracking-wider hidden lg:block">Email</span>
-                        <span className="text-[10px] text-rose-muted font-bold uppercase tracking-wider text-center">LI</span>
+                        <span className="text-[10px] text-rose-muted font-bold uppercase tracking-wider text-right">Actions</span>
                       </div>
 
                       <div className="divide-y-2 divide-rose-hl-low">
@@ -652,7 +664,7 @@ export function CompanyResearch() {
                             key={emp.id}
                             initial={{ opacity: 0, x: -8 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className={`relative grid grid-cols-[20px_32px_1fr_40px] md:grid-cols-[20px_32px_1fr_144px_40px] lg:grid-cols-[20px_32px_1fr_144px_160px_40px] items-center gap-4 px-5 py-3.5 transition-colors duration-100 ${
+                            className={`relative grid grid-cols-[20px_32px_1fr_64px] md:grid-cols-[20px_32px_1fr_144px_64px] lg:grid-cols-[20px_32px_1fr_144px_160px_64px] items-center gap-4 px-5 py-3.5 transition-colors duration-100 ${
                               selectedEmployeeIds.has(emp.id)
                                 ? "bg-rose-pine/5"
                                 : "hover:bg-rose-hl-low/30"
@@ -711,8 +723,8 @@ export function CompanyResearch() {
                               )}
                             </div>
 
-                            {/* LinkedIn */}
-                            <div className="flex justify-center">
+                            {/* Actions (LinkedIn + Chevron Down) */}
+                            <div className="flex items-center justify-end gap-1.5">
                               {emp.linkedin_url ? (
                                 <a
                                   href={emp.linkedin_url}
@@ -721,12 +733,69 @@ export function CompanyResearch() {
                                   className="w-7 h-7 flex items-center justify-center border-2 border-rose-border bg-rose-surface text-rose-muted hover:text-rose-pine hover:border-rose-pine hover:shadow-[2px_2px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all duration-150"
                                   title="View LinkedIn Profile"
                                 >
-                                  <Linkedin size={12} />
+                                  <Linkedin size={11} />
                                 </a>
                               ) : (
                                 <span className="text-[10px] text-rose-hl-med">—</span>
                               )}
+                              
+                              <button
+                                onClick={() => handleToggleRowExpand(emp.id)}
+                                className="w-7 h-7 flex items-center justify-center border-2 border-rose-border bg-rose-surface text-rose-muted hover:text-rose-pine hover:border-rose-pine active:scale-95 transition-all"
+                                title="Show details & insights"
+                              >
+                                <ChevronDown 
+                                  size={13} 
+                                  className={`transition-transform duration-200 ${expandedRowIds.has(emp.id) ? "rotate-180" : ""}`} 
+                                />
+                              </button>
                             </div>
+
+                            {/* Collapsible detail drawer */}
+                            <AnimatePresence>
+                              {expandedRowIds.has(emp.id) && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="col-span-full border-t border-dashed border-rose-border pt-3.5 pb-2.5 mt-2 space-y-3.5 text-xs text-rose-text"
+                                >
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Role Description */}
+                                    <div className="border-2 border-rose-border bg-rose-surface p-3.5 shadow-[4px_4px_0px_0px_var(--color-shadow)]">
+                                      <p className="text-[9px] font-black uppercase tracking-widest text-rose-love mb-1.5">
+                                        Role &amp; Scope
+                                      </p>
+                                      <p className="font-semibold text-rose-muted leading-relaxed">
+                                        {emp.role_description || "No specific role details extracted for this contact."}
+                                      </p>
+                                    </div>
+
+                                    {/* Profile Insights */}
+                                    <div className="border-2 border-rose-border bg-rose-surface p-3.5 shadow-[4px_4px_0px_0px_var(--color-shadow)]">
+                                      <p className="text-[9px] font-black uppercase tracking-widest text-rose-pine mb-1.5">
+                                        Outreach Insights &amp; Hooks
+                                      </p>
+                                      <p className="font-semibold text-rose-muted leading-relaxed">
+                                        {emp.profile_insights || "No personalized outreach insights generated for this role."}
+                                      </p>
+                                      {emp.profile_insights && (
+                                        <button
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(emp.profile_insights || "");
+                                            toast.success("Outreach hook copied to clipboard!");
+                                          }}
+                                          className="mt-2.5 flex items-center gap-1 text-[10px] font-black text-rose-pine hover:underline uppercase tracking-wider"
+                                        >
+                                          Copy Hook
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </motion.div>
                         ))}
                       </div>

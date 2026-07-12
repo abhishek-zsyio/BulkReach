@@ -6,7 +6,7 @@ import time
 import random
 import urllib.parse
 from typing import List, Dict
-from .base_scraper import BaseScraper
+from .base_scraper import BaseScraper``
 
 logger = logging.getLogger(__name__)
 

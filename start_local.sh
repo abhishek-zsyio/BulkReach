@@ -56,6 +56,51 @@ if [ ! -d "$BACKEND_DIR/venv" ]; then
     exit 1
 fi
 
+echo -e "\n${YELLOW}🔍 Checking Database and Cache Services...${NC}"
+
+# Check and start Redis if needed
+if ! redis-cli ping >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️ Redis is not running. Attempting to start it via Homebrew...${NC}"
+    if command -v brew &> /dev/null; then
+        brew services start redis
+        sleep 2
+        if redis-cli ping >/dev/null 2>&1; then
+            echo -e "${GREEN}✓ Redis started successfully.${NC}"
+        else
+            echo -e "${RED}❌ Failed to start Redis. Please make sure Redis is installed and running on port 6379.${NC}"
+        fi
+    else
+        echo -e "${RED}❌ Redis is not running, and Homebrew was not found. Please start Redis manually.${NC}"
+    fi
+else
+    echo -e "${GREEN}✓ Redis is running.${NC}"
+fi
+
+# Check and start PostgreSQL if needed
+if ! nc -z localhost 5432 >/dev/null 2>&1 && ! pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️ PostgreSQL is not running on port 5432. Attempting to start it via Homebrew...${NC}"
+    if command -v brew &> /dev/null; then
+        if brew list postgresql@18 &>/dev/null; then
+            brew services start postgresql@18
+        elif brew list postgresql@15 &>/dev/null; then
+            brew services start postgresql@15
+        else
+            brew services start postgresql || true
+        fi
+        sleep 3
+        if nc -z localhost 5432 >/dev/null 2>&1 || pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
+            echo -e "${GREEN}✓ PostgreSQL started successfully.${NC}"
+        else
+            echo -e "${RED}❌ Failed to start PostgreSQL on port 5432. Please start it manually.${NC}"
+        fi
+    else
+        echo -e "${RED}❌ PostgreSQL is not running on port 5432. Please start it manually.${NC}"
+    fi
+else
+    echo -e "${GREEN}✓ PostgreSQL is running on port 5432.${NC}"
+fi
+echo ""
+
 # Present options menu to user
 echo -e "${YELLOW}Please choose which services you want to launch:${NC}"
 echo -e "  ${GREEN}1)${NC} Start All Services (Recommended)"

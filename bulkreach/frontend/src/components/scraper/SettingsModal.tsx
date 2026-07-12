@@ -12,7 +12,7 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-const VALID_GEMINI_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+const VALID_GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { user, fetchUserProfile, accessToken } = useAuth();
@@ -21,7 +21,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [deleteResume] = useDeleteResumeMutation();
 
   const [apiKeyInput, setApiKeyInput] = useState("");
-  const [geminiModel, setGeminiModel] = useState("gemini-3.5-flash");
+  const [geminiModel, setGeminiModel] = useState("gemini-2.5-flash");
   const [newResumeName, setNewResumeName] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
@@ -30,7 +30,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     if (isOpen && user) {
       setApiKeyInput("");
       const saved = user.gemini_model || "";
-      setGeminiModel(VALID_GEMINI_MODELS.includes(saved) ? saved : "gemini-3.5-flash");
+      setGeminiModel(VALID_GEMINI_MODELS.includes(saved) ? saved : "gemini-2.5-flash");
     }
   }, [isOpen, user]);
 
@@ -189,8 +189,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         value={geminiModel}
                         onChange={(val) => setGeminiModel(val.toString())}
                         options={[
-                          { value: "gemini-3.5-flash", label: "Gemini 3.5 Flash — Recommended · Fastest" },
-                          { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash — Fast & Smart" },
+                          { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash — Recommended · Fastest" },
                           { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro — Most Powerful Reasoning" },
                           { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash — Fast & Balanced" },
                           { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash — Legacy · Stable" },
