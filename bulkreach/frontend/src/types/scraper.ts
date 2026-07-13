@@ -51,6 +51,8 @@ export interface ProfileResearch {
   name: string;
   job_title: string;
   company: string;
+  headline?: string;
+  total_experience?: string;
   email: string;
   phone_number: string;
   location: string;

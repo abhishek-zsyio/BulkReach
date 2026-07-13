@@ -36,6 +36,7 @@ import { StatusBadge } from "@/components/campaign/StatusBadge";
 import { useConfirm } from "@/components/ui/dialogs";
 import { ResearchModal } from "@/components/scraper/ResearchModal";
 import { ResearchImportModal } from "@/components/scraper/ResearchImportModal";
+import { ResearchTabs } from "@/components/scraper/ResearchTabs";
 
 // ── Animation variants ──────────────────────────────────────────────────────
 const containerVariants = {
@@ -295,6 +296,7 @@ export function CompanyResearch() {
       animate="show"
       className="space-y-6 pb-12"
     >
+      <ResearchTabs />
       {/* ── Header ── */}
       <motion.div variants={itemVariants} className="flex items-center justify-between gap-4">
         <div>

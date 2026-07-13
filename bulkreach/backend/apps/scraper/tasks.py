@@ -582,12 +582,12 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
                 bulk_employees.append(
                     CompanyEmployee(
                         company=enrichment,
-                        name=name.strip(),
-                        job_title=(emp.get("job_title") or "").strip(),
+                        name=clean_llm_string(name),
+                        job_title=clean_llm_string(emp.get("job_title") or ""),
                         linkedin_url=(emp.get("linkedin_url") or "").strip(),
-                        email=(emp.get("email") or "").strip(),
-                        role_description=(emp.get("role_description") or "").strip(),
-                        profile_insights=(emp.get("profile_insights") or "").strip()
+                        email=clean_llm_string(emp.get("email") or ""),
+                        role_description=clean_llm_string(emp.get("role_description") or ""),
+                        profile_insights=clean_llm_string(emp.get("profile_insights") or "")
                     )
                 )
 
@@ -607,11 +607,61 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
 
     except Exception as exc:
         logger.error("Company enrichment %s failed: %s", enrichment_id, exc)
+        err_str = str(exc).lower()
+        error_msg = str(exc)[:1000]
+        if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
+            error_msg = "Gemini API quota exceeded or rate limit reached. If you are using the free tier, consider switching to gemini-2.5-flash in Settings or enabling billing on Google AI Studio."
+        elif "503" in err_str or "unavailable" in err_str or "demand" in err_str:
+            error_msg = "Gemini API is temporarily experiencing high demand (503 Service Unavailable). Please try again in a few moments."
+        
         enrichment.status = CompanyEnrichment.Status.FAILED
-        enrichment.error_message = str(exc)[:1000]
+        enrichment.error_message = error_msg
         enrichment.completed_at = timezone.now()
         enrichment.save()
-        return {"error": str(exc)}
+        return {"error": error_msg}
+
+
+def clean_llm_string(text: str) -> str:
+    """
+    Cleans up common formatting issues from LLM responses, 
+    such as literal "\n" strings instead of actual newlines, and escaped characters.
+    """
+    if not text:
+        return ""
+    # Replace literal "\n" string representation with actual newline character
+    text = text.replace("\\n", "\n")
+    # Replace LaTeX-style escaped characters that LLM often returns in JSON mode
+    text = text.replace("\\&", "&")
+    text = text.replace("\\_", "_")
+    text = text.replace('\\"', '"')
+    text = text.replace("\\'", "'")
+    return text.strip()
+
+
+def clean_linkedin_profile_url(profile_url: str) -> tuple[str, str]:
+    """
+    Normalizes a LinkedIn profile URL or handle.
+    Returns: (normalized_url, slug)
+    e.g. 'https://in.linkedin.com/in/john-doe-123/?abc=123' -> ('https://www.linkedin.com/in/john-doe-123', 'john-doe-123')
+    """
+    import re
+    url = profile_url.strip()
+    
+    # Check if it has linkedin.com/in/ in it
+    match = re.search(r'linkedin\.com/in/([^/?#]+)', url, re.IGNORECASE)
+    if match:
+        slug = match.group(1)
+        return f"https://www.linkedin.com/in/{slug}", slug
+        
+    # Check if it's already just the slug (no slashes, no dots)
+    if '/' not in url and '.' not in url:
+        return f"https://www.linkedin.com/in/{url}", url
+        
+    # Fallback to general splits
+    # Remove query params first
+    clean_url = url.split('?')[0].split('#')[0].rstrip('/')
+    slug = clean_url.split('/')[-1]
+    return f"https://www.linkedin.com/in/{slug}", slug
 
 
 @shared_task(
@@ -629,17 +679,20 @@ def run_profile_research(self, profile_research_id: int) -> dict:
     import json
 
     class ProfileDetailsSchema(BaseModel):
+        found_data: bool = Field(..., description="Set to true if matching web search snippets exist for this specific person. Set to false if snippets are empty, generic, or do not contain information about the target person.")
         name: Optional[str] = Field(default=None, description="Full Name of the person")
         job_title: Optional[str] = Field(default=None, description="Job title / role")
         company: Optional[str] = Field(default=None, description="Current company name")
+        headline: Optional[str] = Field(default=None, description="Profile headline / professional tagline")
+        total_experience: Optional[str] = Field(default=None, description="Total years of work experience, e.g. '5 years', '10+ years'")
         email: Optional[str] = Field(default=None, description="Guessed or estimated professional email format (e.g. first.last@company.com or careers@company.com)")
         phone_number: Optional[str] = Field(default=None, description="Phone number if publicly available, or null")
         location: Optional[str] = Field(default=None, description="Location/City/Country")
         summary: Optional[str] = Field(default=None, description="Short professional summary of their background")
         skills: List[str] = Field(default=[], description="Key skills list")
         interests: List[str] = Field(default=[], description="Subjects, projects, technologies, or topics this person is likely interested in based on their profile")
-        connection_message: str = Field(..., description="LinkedIn connection request message, strictly under 300 characters, personalized to their focus and friendly.")
-        outreach_message: str = Field(..., description="Personalized outreach message (email body) based on their professional background, mentioning specific things they are interested in.")
+        connection_message: Optional[str] = Field(default=None, description="LinkedIn connection request message, strictly under 300 characters, personalized to their focus and friendly.")
+        outreach_message: Optional[str] = Field(default=None, description="Personalized outreach message (email body) based on their professional background, mentioning specific things they are interested in.")
 
     try:
         research = ProfileResearch.objects.get(pk=profile_research_id)
@@ -659,41 +712,86 @@ def run_profile_research(self, profile_research_id: int) -> dict:
 
         client = genai.Client(api_key=api_key)
         profile_url = research.profile_url
+        normalized_url, slug = clean_linkedin_profile_url(profile_url)
 
-        # Parse url parts for better search query
-        # e.g. https://www.linkedin.com/in/priya-sharma-developer/ -> priya sharma developer
-        url_clean = profile_url.rstrip('/')
-        url_slug = url_clean.split('/')[-1].replace('-', ' ')
+        # Update to clean URL in DB if it was not already cleaned
+        if research.profile_url != normalized_url:
+            research.profile_url = normalized_url
+            research.save(update_fields=["profile_url"])
 
-        logger.info("Searching search engine for public profile info for: %s", url_slug)
-        search_query = f'"{url_slug}" site:linkedin.com/in OR "{url_slug}" resume portfolio'
+        logger.info("Searching search engine for public profile info for: %s", slug)
+        search_query = f'"{normalized_url}" OR "linkedin.com/in/{slug}" OR "site:linkedin.com/in/{slug}"'
         search_results = _perform_web_search(search_query, max_results=5)
         
-        search_text = ""
-        if search_results:
-            search_text = "\n".join([f"Title: {r.get('title')}\nSnippet: {r.get('snippet')}" for r in search_results])
+        import urllib.parse
+        matching_results = []
+        slug_lower = slug.lower()
+        slug_spaced = slug_lower.replace('-', ' ')
 
-        # Candidate resume context
+        def filter_matches(results):
+            matches = []
+            for r in results:
+                link = urllib.parse.unquote(r.get("link", "")).lower()
+                snippet = r.get("snippet", "").lower()
+                title = r.get("title", "").lower()
+                
+                # Match if the result is their direct LinkedIn profile page
+                if f"linkedin.com/in/{slug_lower}" in link or f"linkedin.com/in/{slug_lower}/" in link:
+                    matches.append(r)
+                # Match if the handle itself is explicitly mentioned in title/snippet (e.g. resumes, GitHub, personal site)
+                elif slug_lower in title or slug_lower in snippet:
+                    matches.append(r)
+                # Match if the slug with spaces is explicitly mentioned in title/snippet (handles name representations)
+                elif slug_spaced in title or slug_spaced in snippet:
+                    matches.append(r)
+            return matches
+
+        # Initial filtering
+        matching_results = filter_matches(search_results)
+        
+        # Fallback 1: Try searching for the raw slug/handle (helps find GitHub, portfolio, resumes, etc.)
+        if not matching_results:
+            logger.info("No matching results found for URL query. Trying fallback search with raw handle: %s", slug)
+            fallback_results = _perform_web_search(slug, max_results=5)
+            matching_results = filter_matches(fallback_results)
+            
+        # Fallback 2: Try name keywords + 'linkedin' to find the profile
+        if not matching_results:
+            import re
+            name_query = " ".join([p for p in slug.split('-') if p and not re.match(r'^[0-9a-fA-F]+$', p)])
+            if name_query:
+                logger.info("No matching results found for handle query. Trying fallback search with name query: %s", name_query)
+                fallback_results2 = _perform_web_search(f'"{name_query}" linkedin', max_results=5)
+                matching_results = filter_matches(fallback_results2)
+
+        search_text = ""
+        if matching_results:
+            search_text = "\n".join([f"Title: {r.get('title')}\nSnippet: {r.get('snippet')}" for r in matching_results])
+
+        # Candidate resume context (Sender's Resume)
         resume_text = getattr(user, "resume_text", "")
 
         prompt = f"""
 You are an expert AI recruiter and personal profiler.
-I will give you a public profile URL and any public web search snippets gathered about this person.
+I will give you a target person's public LinkedIn profile URL, public web search snippets gathered about this target person, and the sender's (your) resume.
 
-Profile URL: {profile_url}
-Search Snippets:
+Target Profile URL: {normalized_url}
+Target Person's Search Snippets:
 {search_text}
 
-Candidate Resume (use this to tailor the connection/outreach request so it bridges the gap between candidate background and the prospect's interests):
+Sender's Resume (Your Resume):
 {resume_text}
 
 Task:
-1. Extract the person's professional details (Name, Job Title, Company, Location, Summary, Skills).
-2. Guess/synthesize a professional email address (using the company name to formulate standard formats like first.last@company.com, or check snippets).
-3. Identify a list of 3-5 interests or topics they care about (technologies, methodologies, industries).
-4. Generate:
-   - A highly personalized LinkedIn Connection Message that is strictly under 300 characters, including spaces, explaining why you want to connect.
-   - A personalized outreach message (email body) addressing their specific interests.
+1. Verify if the search snippets actually describe the Target Person at "{normalized_url}" (matching handle "{slug}").
+2. If the search snippets are empty, do not contain references to the handle "{slug}", or do not contain enough public info to build a profile, you MUST set "found_data" to false in the JSON. DO NOT hallucinate fake details, companies, or names.
+3. If and only if matching snippets describe the Target Person:
+   - Set "found_data" to true.
+   - Extract the Target Person's Name, Job Title, Current Company, Headline/tagline, Total years of work experience, Location, Summary, and Skills from the Target Person's Search Snippets.
+   - CRITICAL: Do NOT extract details (such as Name, Company, or Job Title) from the Sender's Resume as the Target Person's details. The Sender's Resume belongs to the person who is reaching out, not the target person being researched.
+   - Guess/synthesize a professional email address for the Target Person using their current company domain.
+   - Generate a highly personalized LinkedIn Connection Message (strictly under 300 characters) and email hook from the Sender to the Target Person. Highlight how the Sender's background (from the Sender's Resume) aligns with the Target Person's role/company (from the Search Snippets).
+   - CRITICAL: Write the Connection Message and Email Hook with real line breaks/newlines. Do NOT write literal '\\n' characters. Do NOT escape special characters (e.g., do NOT write '\\&', '\\_', or similar LaTeX/Markdown escapes; just write normal text like '&' or '_').
 
 Respond ONLY with a valid JSON representation matching the requested schema.
 """
@@ -710,22 +808,27 @@ Respond ONLY with a valid JSON representation matching the requested schema.
 
         data = json.loads(response.text)
 
-        research.name = (data.get("name") or "").strip() or url_slug.title()
-        research.job_title = (data.get("job_title") or "").strip()
-        research.company = (data.get("company") or "").strip()
-        research.email = (data.get("email") or "").strip()
-        research.phone_number = (data.get("phone_number") or "").strip()
-        research.location = (data.get("location") or "").strip()
-        research.summary = (data.get("summary") or "").strip()
+        if not data.get("found_data"):
+            raise ValueError(f"Could not find public profile details for the exact handle '{slug}' on the web. Please verify that the profile is public and indexed.")
+
+        research.name = clean_llm_string(data.get("name") or "").strip() or slug.replace('-', ' ').title()
+        research.job_title = clean_llm_string(data.get("job_title") or "")
+        research.company = clean_llm_string(data.get("company") or "")
+        research.headline = clean_llm_string(data.get("headline") or "")
+        research.total_experience = clean_llm_string(data.get("total_experience") or "")
+        research.email = clean_llm_string(data.get("email") or "")
+        research.phone_number = clean_llm_string(data.get("phone_number") or "")
+        research.location = clean_llm_string(data.get("location") or "")
+        research.summary = clean_llm_string(data.get("summary") or "")
         research.skills = data.get("skills") or []
         research.interests = data.get("interests") or []
         
-        conn_msg = data.get("connection_message") or ""
+        conn_msg = clean_llm_string(data.get("connection_message") or "")
         # Guarantee connection message is under 300 characters
         if len(conn_msg) > 295:
             conn_msg = conn_msg[:290] + "..."
         research.connection_message = conn_msg.strip()
-        research.outreach_message = (data.get("outreach_message") or "").strip()
+        research.outreach_message = clean_llm_string(data.get("outreach_message") or "")
 
         research.status = ProfileResearch.Status.DONE
         research.completed_at = timezone.now()
@@ -735,10 +838,18 @@ Respond ONLY with a valid JSON representation matching the requested schema.
 
     except Exception as exc:
         logger.error("Profile research %s failed: %s", profile_research_id, exc)
+        err_str = str(exc).lower()
+        error_msg = str(exc)[:1000]
+        if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
+            error_msg = "Gemini API quota exceeded or rate limit reached. If you are using the free tier, consider switching to gemini-2.5-flash in Settings or enabling billing on Google AI Studio."
+        elif "503" in err_str or "unavailable" in err_str or "demand" in err_str:
+            error_msg = "Gemini API is temporarily experiencing high demand (503 Service Unavailable). Please try again in a few moments."
+        
         research.status = ProfileResearch.Status.FAILED
-        research.error_message = str(exc)[:1000]
+        research.error_message = error_msg
         research.completed_at = timezone.now()
         research.save()
-        return {"error": str(exc)}
+        return {"error": error_msg}
+
 
 

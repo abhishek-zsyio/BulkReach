@@ -122,6 +122,13 @@ def send_campaign_emails(self, campaign_id: int) -> dict:
                     html_body = renderer.render(campaign.template.html_body, row_data)
                     subject = renderer.render_subject(campaign.subject_template, row_data)
 
+                    # Deliverability Guard content check
+                    from apps.campaigns.services.deliverability_guard import DeliverabilityGuard
+                    guard = DeliverabilityGuard()
+                    is_spammy, reasons = guard.analyze_content(subject, html_body)
+                    if is_spammy:
+                        raise ValueError(f"Deliverability Guard flagged content: {'; '.join(reasons)}")
+
                     # Build tracking pixel snippet (None when not applicable)
                     tracking_pixel_html = None
                     if tracking_active and signer:
@@ -190,8 +197,18 @@ def send_campaign_emails(self, campaign_id: int) -> dict:
                 elif recipient.status == RecipientList.Status.FAILED:
                     Campaign.objects.filter(pk=campaign_id).update(failed_count=F("failed_count") + 1)
 
-            # Rate limiting — configurable delay
-            time.sleep(max(0, campaign.send_delay_seconds))
+            # Rate limiting — Deliverability Guard randomized throttling
+            if recipient.status == RecipientList.Status.SENT:
+                import random
+                delay = random.uniform(30.0, 90.0)
+                logger.info(
+                    "Deliverability Guard: Throttling campaign %s send with randomized delay of %.2f seconds.",
+                    campaign_id, delay
+                )
+                time.sleep(delay)
+            else:
+                # Small sleep for failed items to prevent a tight loop
+                time.sleep(0.5)
 
     # Update counters cleanly from DB
     final_sent = RecipientList.objects.filter(campaign=campaign, status=RecipientList.Status.SENT).count()

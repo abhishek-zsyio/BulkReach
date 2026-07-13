@@ -12,6 +12,7 @@ const PAGE_TITLES: Record<string, { label: string; subtitle?: string }> = {
   "/resumes":          { label: "Resumes",            subtitle: "Uploaded resumes" },
   "/scraper":          { label: "Job Scraper",        subtitle: "Discover job listings" },
   "/company-research": { label: "Company Research",  subtitle: "AI-powered employee discovery" },
+  "/profile-research": { label: "Profile Research",  subtitle: "AI-powered LinkedIn profile insights" },
   "/settings":         { label: "Settings",           subtitle: "Account & integrations" },
   "/logs":             { label: "Logs",               subtitle: "Activity & email logs" },
   "/tracker":          { label: "Application Tracker",subtitle: "Track your job pipeline" },

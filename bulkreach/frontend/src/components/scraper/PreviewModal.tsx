@@ -27,7 +27,10 @@ export function PreviewModal({ templateId, templateName, onClose }: PreviewModal
   }
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-rose-base/70"
       style={{
         backgroundImage:
@@ -121,6 +124,6 @@ export function PreviewModal({ templateId, templateName, onClose }: PreviewModal
           </div>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

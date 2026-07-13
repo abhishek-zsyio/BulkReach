@@ -1008,9 +1008,12 @@ class ProfileResearchListCreateView(APIView):
             )
 
         # Create profile research record
+        from apps.scraper.tasks import clean_linkedin_profile_url
+        normalized_url, _ = clean_linkedin_profile_url(profile_url)
+
         research = ProfileResearch.objects.create(
             user=request.user,
-            profile_url=profile_url,
+            profile_url=normalized_url,
             status=ProfileResearch.Status.PENDING
         )
 

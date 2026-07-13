@@ -54,6 +54,7 @@ import { SearchModal } from "@/components/scraper/SearchModal";
 import { SettingsModal } from "@/components/scraper/SettingsModal";
 import { ImportModal } from "@/components/scraper/ImportModal";
 import { FallbackConfirmationModal } from "@/components/scraper/FallbackConfirmationModal";
+import { ResearchTabs } from "@/components/scraper/ResearchTabs";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -503,6 +504,7 @@ export function ScraperDashboard() {
       animate="show"
       className="space-y-6 pb-12"
     >
+      <ResearchTabs />
       {/* Header */}
       <motion.div variants={itemVariants} className="card relative overflow-hidden grid-bg border-2 border-rose-border p-6 shadow-[4px_4px_0px_0px_var(--color-shadow)]">
         <span className="absolute top-0 left-0 bottom-0 w-[5px] bg-gradient-to-b from-rose-pine via-rose-iris to-rose-foam" />

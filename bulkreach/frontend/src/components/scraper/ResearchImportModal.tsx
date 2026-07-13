@@ -30,7 +30,10 @@ export function ResearchImportModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-rose-base/70"
           style={{
             backgroundImage:
@@ -157,7 +160,7 @@ export function ResearchImportModal({
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

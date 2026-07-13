@@ -26,7 +26,10 @@ export function ImportModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-rose-base/70"
           style={{
             backgroundImage:
@@ -70,13 +73,14 @@ export function ImportModal({
               <div className="flex items-start justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b-2 border-rose-border shrink-0">
                 <div>
                   <h3 className="text-lg font-black text-rose-text uppercase tracking-tight leading-none">
-                    Import Candidates
+                    Import to Campaign
                   </h3>
                   <p className="text-[12px] text-rose-muted font-bold mt-1.5">
-                    Add scraped candidate records directly to an active outreach campaign.
+                    Ready to import {resultsCount} mapped lead{resultsCount !== 1 ? "s" : ""} into your target outreach container.
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={onClose}
                   className="w-8 h-8 shrink-0 flex items-center justify-center text-rose-text bg-rose-surface border-2 border-rose-border hover:bg-rose-love hover:text-white hover:border-rose-love active:scale-95 transition-all"
                 >
@@ -92,7 +96,7 @@ export function ImportModal({
                     <span className="text-[10px] font-black uppercase tracking-widest text-rose-muted mb-2.5 block">
                       01 — Destination Campaign
                     </span>
-                    <div className="border-2 border-rose-border p-3.5">
+                    <div className="border-2 border-rose-border p-3.5 bg-rose-surface">
                       <label htmlFor="import-campaign-select" className="block text-[10px] font-black uppercase tracking-widest text-rose-love mb-1.5">
                         Campaign — required
                       </label>
@@ -101,7 +105,7 @@ export function ImportModal({
                         onChange={(val) => setSelectedCampaignId(val.toString())}
                         options={campaigns.map((camp) => ({
                           value: camp.id.toString(),
-                          label: `${camp.name} (${camp.total_recipients} recipients)`,
+                          label: `${camp.name} (${camp.total_recipients || 0} recipients)`,
                         }))}
                         placeholder="Select campaign..."
                       />
@@ -136,7 +140,7 @@ export function ImportModal({
                 <button
                   type="submit"
                   form="import-form"
-                  disabled={isImporting || !selectedCampaignId}
+                  disabled={!selectedCampaignId || isImporting}
                   className="flex items-center gap-2 bg-rose-text text-rose-surface text-xs font-black uppercase tracking-widest py-3 px-6 border-2 border-rose-text shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] active:translate-x-0 active:translate-y-0 active:shadow-none transition-all disabled:opacity-60 disabled:translate-x-0 disabled:translate-y-0"
                 >
                   {isImporting ? (
@@ -154,7 +158,7 @@ export function ImportModal({
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

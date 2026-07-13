@@ -26,6 +26,7 @@ import {
 } from "@/api/scraperApi";
 import { formatDate } from "@/utils/helpers";
 import { useConfirm } from "@/components/ui/dialogs";
+import { ResearchTabs } from "@/components/scraper/ResearchTabs";
 
 function formatDuration(seconds: number | null | undefined): string {
   if (seconds === null || seconds === undefined) return "—";
@@ -129,6 +130,7 @@ export function ProfileResearch() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-110px)] max-h-[850px] relative">
+      <ResearchTabs />
       {/* Header */}
       <motion.div
         variants={itemVariants}
@@ -395,11 +397,21 @@ export function ProfileResearch() {
                       <p className="text-xs font-extrabold text-rose-muted mt-1 leading-snug uppercase tracking-wide">
                         {selectedResearch.job_title || "Unknown Role"} <span className="text-rose-hl-med">@</span> {selectedResearch.company || "Unknown Company"}
                       </p>
+                      {selectedResearch.headline && (
+                        <p className="text-[11px] font-semibold text-rose-subtle mt-1.5 max-w-lg leading-normal">
+                          {selectedResearch.headline}
+                        </p>
+                      )}
                       
-                      <div className="flex flex-wrap items-center gap-3 mt-2 text-[10px] text-rose-muted font-bold">
+                      <div className="flex flex-wrap items-center gap-3 mt-2.5 text-[10px] text-rose-muted font-bold">
                         {selectedResearch.location && (
                           <span className="flex items-center gap-1">
                             <MapPin size={11} className="stroke-[2.5]" /> {selectedResearch.location}
+                          </span>
+                        )}
+                        {selectedResearch.total_experience && (
+                          <span className="flex items-center gap-1">
+                            <Briefcase size={11} className="stroke-[2.5]" /> Exp: {selectedResearch.total_experience}
                           </span>
                         )}
                         {selectedResearch.duration !== undefined && selectedResearch.duration !== null && (

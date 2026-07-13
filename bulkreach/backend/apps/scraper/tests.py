@@ -204,3 +204,66 @@ class CompanyEnrichmentAPITests(APITestCase):
         from apps.recipients.models import RecipientList
         self.assertTrue(RecipientList.objects.filter(campaign=self.campaign, email="johndoe@google.com").exists())
 
+
+class ProfileResearchAPITests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser_pr", password="testpassword_pr")
+        self.user.gemini_api_key = "fake-key"
+        self.user.save()
+        self.client.force_authenticate(user=self.user)
+
+        from apps.scraper.models import ProfileResearch
+        self.research = ProfileResearch.objects.create(
+            user=self.user,
+            profile_url="https://linkedin.com/in/priya-sharma-developer",
+            status=ProfileResearch.Status.DONE,
+            name="Priya Sharma",
+            job_title="Frontend Developer",
+            company="Self",
+            email="priya@example.com"
+        )
+
+    def test_list_researches(self):
+        url = reverse("profile-research-list-create")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["name"], "Priya Sharma")
+
+    @patch("apps.scraper.tasks.run_profile_research.delay")
+    def test_create_research(self, mock_delay):
+        url = reverse("profile-research-list-create")
+        response = self.client.post(url, {"profile_url": "https://linkedin.com/in/priya-dev"})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Verify the URL is correctly normalized
+        self.assertEqual(response.data["profile_url"], "https://www.linkedin.com/in/priya-dev")
+        self.assertEqual(response.data["status"], "pending")
+        mock_delay.assert_called_once()
+
+    def test_clean_linkedin_profile_url_utility(self):
+        from apps.scraper.tasks import clean_linkedin_profile_url
+        
+        test_cases = [
+            ("https://in.linkedin.com/in/john-doe-123/?abc=123", ("https://www.linkedin.com/in/john-doe-123", "john-doe-123")),
+            ("http://www.linkedin.com/in/john-doe-123?abc=123", ("https://www.linkedin.com/in/john-doe-123", "john-doe-123")),
+            ("linkedin.com/in/john-doe-123", ("https://www.linkedin.com/in/john-doe-123", "john-doe-123")),
+            ("john-doe-123", ("https://www.linkedin.com/in/john-doe-123", "john-doe-123")),
+            ("https://www.linkedin.com/in/john-doe-123/", ("https://www.linkedin.com/in/john-doe-123", "john-doe-123")),
+        ]
+        
+        for input_url, expected in test_cases:
+            self.assertEqual(clean_linkedin_profile_url(input_url), expected)
+
+    def test_detail_research(self):
+        url = reverse("profile-research-detail", kwargs={"pk": self.research.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["name"], "Priya Sharma")
+
+    def test_delete_research(self):
+        from apps.scraper.models import ProfileResearch
+        url = reverse("profile-research-detail", kwargs={"pk": self.research.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(ProfileResearch.objects.filter(id=self.research.id).exists())
+

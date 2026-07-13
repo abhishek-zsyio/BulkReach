@@ -174,6 +174,8 @@ class ProfileResearch(models.Model):
     name = models.CharField(max_length=255, blank=True)
     job_title = models.CharField(max_length=255, blank=True)
     company = models.CharField(max_length=255, blank=True)
+    headline = models.CharField(max_length=500, blank=True)
+    total_experience = models.CharField(max_length=100, blank=True)
     email = models.CharField(max_length=255, blank=True)
     phone_number = models.CharField(max_length=50, blank=True)
     location = models.CharField(max_length=255, blank=True)

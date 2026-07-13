@@ -11,21 +11,23 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
-  Building2,
   Kanban,
   X,
-  UserCheck,
 } from "lucide-react";
 import { cn } from "@/utils/helpers";
 
-const navItems = [
+interface NavItem {
+  to: string;
+  icon: any;
+  label: string;
+}
+
+const navItems: NavItem[] = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/campaigns", icon: Send, label: "Campaigns" },
   { to: "/templates", icon: Mail, label: "Templates" },
   { to: "/resumes", icon: FileText, label: "Resumes" },
-  { to: "/scraper", icon: ScanSearch, label: "Job Scraper" },
-  { to: "/company-research", icon: Building2, label: "Company Research" },
-  { to: "/profile-research", icon: UserCheck, label: "Profile Research" },
+  { to: "/scraper", icon: ScanSearch, label: "Research Hub" },
   { to: "/tracker", icon: Kanban, label: "Tracker" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
@@ -54,6 +56,7 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
       case "Job Scraper":     return "group-hover:scale-110 group-hover:rotate-12";
       case "Company Research":return "group-hover:scale-110 group-hover:-rotate-6";
       case "Profile Research":return "group-hover:scale-110 group-hover:rotate-6";
+      case "Research Hub":    return "group-hover:scale-110 group-hover:rotate-6";
       case "Tracker":         return "group-hover:scale-110 group-hover:rotate-6";
       case "Settings":        return "group-hover:rotate-45 group-hover:scale-110";
       default:                return "group-hover:scale-110";
@@ -97,45 +100,54 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
             Navigation
           </p>
         )}
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            title={isCollapsed ? label : undefined}
-            className={({ isActive }) =>
-              cn(
-                "relative flex items-center px-3.5 py-3 rounded-none text-sm font-bold transition-all duration-300 group border-2 overflow-hidden",
-                isCollapsed ? "justify-center" : "gap-3",
-                isActive
-                  ? "text-rose-pine border-rose-border shadow-[2px_2px_0px_0px_var(--color-shadow)]"
-                  : "text-rose-muted border-transparent hover:text-rose-text hover:bg-rose-hl-low hover:border-rose-border hover:shadow-[2px_2px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] active:translate-x-0 active:translate-y-0"
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <span
-                    className="absolute inset-0 opacity-[0.08] pointer-events-none"
-                    style={{ background: "linear-gradient(135deg, var(--color-pine) 0%, var(--color-iris) 100%)" }}
-                  />
-                )}
-                {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-rose-pine to-rose-iris" />
-                )}
-                <Icon
-                  size={16}
-                  className={cn(
-                    "flex-shrink-0 transition-all duration-300 stroke-[2.5]",
-                    isActive ? "text-rose-pine" : "text-rose-muted group-hover:text-rose-text",
-                    getIconAnimation(label)
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const label = item.label;
+
+          const isItemActive = item.to === "/scraper"
+            ? (location.pathname === "/scraper" || location.pathname === "/company-research" || location.pathname === "/profile-research")
+            : (location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to + "/")));
+
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              title={isCollapsed ? label : undefined}
+              className={
+                cn(
+                  "relative flex items-center px-3.5 py-3 rounded-none text-sm font-bold transition-all duration-300 group border-2 overflow-hidden",
+                  isCollapsed ? "justify-center" : "gap-3",
+                  isItemActive
+                    ? "text-rose-pine border-rose-border shadow-[2px_2px_0px_0px_var(--color-shadow)]"
+                    : "text-rose-muted border-transparent hover:text-rose-text hover:bg-rose-hl-low hover:border-rose-border hover:shadow-[2px_2px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] active:translate-x-0 active:translate-y-0"
+                )
+              }
+            >
+              {() => (
+                <>
+                  {isItemActive && (
+                    <span
+                      className="absolute inset-0 opacity-[0.08] pointer-events-none"
+                      style={{ background: "linear-gradient(135deg, var(--color-pine) 0%, var(--color-iris) 100%)" }}
+                    />
                   )}
-                />
-                {!isCollapsed && <span>{label}</span>}
-              </>
-            )}
-          </NavLink>
-        ))}
+                  {isItemActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-rose-pine to-rose-iris" />
+                  )}
+                  <Icon
+                    size={16}
+                    className={cn(
+                      "flex-shrink-0 transition-all duration-300 stroke-[2.5]",
+                      isItemActive ? "text-rose-pine" : "text-rose-muted group-hover:text-rose-text",
+                      getIconAnimation(label)
+                    )}
+                  />
+                  {!isCollapsed && <span>{label}</span>}
+                </>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Bottom toggle */}
@@ -212,30 +224,46 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
             <p className="text-[10px] font-extrabold text-rose-muted uppercase tracking-widest px-3.5 mb-3.5">
               Navigation
             </p>
-            {navItems.map(({ to, icon: Icon, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  cn(
-                    "relative flex items-center gap-3 px-4 py-3.5 rounded-none text-sm font-bold transition-all duration-200 border-2 overflow-hidden",
-                    isActive
-                      ? "text-rose-pine border-rose-border bg-rose-hl-low shadow-[2px_2px_0px_0px_var(--color-shadow)]"
-                      : "text-rose-muted border-transparent active:bg-rose-hl-low"
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    {isActive && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-rose-pine to-rose-iris" />
-                    )}
-                    <Icon size={18} className={cn("flex-shrink-0 stroke-[2.5]", isActive ? "text-rose-pine" : "text-rose-muted")} />
-                    <span>{label}</span>
-                  </>
-                )}
-              </NavLink>
-            ))}
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const label = item.label;
+
+              const isItemActive = item.to === "/scraper"
+                ? (location.pathname === "/scraper" || location.pathname === "/company-research" || location.pathname === "/profile-research")
+                : (location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to + "/")));
+
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={
+                    cn(
+                      "relative flex items-center gap-3 px-4 py-3.5 rounded-none text-sm font-bold transition-all duration-200 border-2 overflow-hidden",
+                      isItemActive
+                        ? "text-rose-pine border-rose-border bg-rose-hl-low shadow-[2px_2px_0px_0px_var(--color-shadow)]"
+                        : "text-rose-muted border-transparent active:bg-rose-hl-low"
+                    )
+                  }
+                >
+                  {() => (
+                    <>
+                      {isItemActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-rose-pine to-rose-iris" />
+                      )}
+                      <Icon
+                        size={18}
+                        className={cn(
+                          "flex-shrink-0 stroke-[2.5]",
+                          isItemActive ? "text-rose-pine" : "text-rose-muted",
+                          getIconAnimation(label)
+                        )}
+                      />
+                      <span>{label}</span>
+                    </>
+                  )}
+                </NavLink>
+              );
+            })}
           </nav>
 
           {/* Mobile bottom */}
