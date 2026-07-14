@@ -346,6 +346,14 @@ Guidelines for Placeholders:
             )
 
             generated_data = json.loads(response.text)
+            
+            from apps.accounts.models import log_ai_usage
+            log_ai_usage(
+                request.user,
+                "Email Template Generation",
+                model_name=getattr(request.user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
+            )
+            
             return Response(generated_data)
         except Exception as exc:
             logger.exception("Failed to generate template via Gemini: %s", exc)

@@ -13,7 +13,7 @@ class BaseScraper(ABC):
     """
 
     @abstractmethod
-    def scrape(self, keywords: str, location: str, max_results: int) -> List[Dict]:
+    def scrape(self, keywords: str, location: str, max_results: int, **kwargs) -> List[Dict]:
         """
         Scrape job listings and return structured contact data.
 

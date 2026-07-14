@@ -2,7 +2,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import UserProfile
+from .models import UserProfile, UserResume, AIUsageLog
 
 
 @admin.register(UserProfile)
@@ -26,4 +26,19 @@ class UserProfileAdmin(UserAdmin):
 
     # Never expose encrypted token fields in admin
     exclude = ("gmail_access_token", "gmail_refresh_token")
-    readonly_fields = ("gmail_connected", "gmail_token_expiry", "created_at", "updated_at")
+    readonly_fields = ("gmail_connected", "gmail_token_expiry")
+
+
+@admin.register(UserResume)
+class UserResumeAdmin(admin.ModelAdmin):
+    list_display = ("name", "user", "is_default", "created_at")
+    list_filter = ("is_default", "created_at")
+    search_fields = ("name", "user__username", "user__email")
+
+
+@admin.register(AIUsageLog)
+class AIUsageLogAdmin(admin.ModelAdmin):
+    list_display = ("user", "request_type", "model_name", "timestamp")
+    list_filter = ("request_type", "model_name", "timestamp")
+    search_fields = ("user__username", "request_type")
+

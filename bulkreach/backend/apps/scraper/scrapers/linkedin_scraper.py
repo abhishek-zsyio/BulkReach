@@ -69,7 +69,7 @@ class LinkedInScraper(BaseScraper):
     MIN_DELAY = 1.0  # seconds between page actions
     MAX_DELAY = 2.5
 
-    def scrape(self, keywords: str, location: str, max_results: int = 50) -> List[Dict]:
+    def scrape(self, keywords: str, location: str, max_results: int = 50, **kwargs) -> List[Dict]:
         """Scrape LinkedIn job listings and return structured contact data."""
         try:
             from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
@@ -78,6 +78,15 @@ class LinkedInScraper(BaseScraper):
                 "Playwright not installed. Run: pip install playwright && playwright install chromium"
             )
             return []
+
+        freshness = kwargs.get("freshness", "any")
+        tpr_param = ""
+        if freshness == "24h":
+            tpr_param = "&f_TPR=r86400"
+        elif freshness == "week":
+            tpr_param = "&f_TPR=r604800"
+        elif freshness == "month":
+            tpr_param = "&f_TPR=r2592000"
 
         import urllib.parse
         encoded_kw = urllib.parse.quote(keywords)
@@ -114,7 +123,7 @@ class LinkedInScraper(BaseScraper):
                         start = page_num * 25
                         url = (
                             f"{self.BASE_URL}?keywords={encoded_kw}"
-                            f"&location={encoded_loc}&start={start}"
+                            f"&location={encoded_loc}&start={start}{tpr_param}"
                         )
                         page.goto(url, timeout=30_000, wait_until="domcontentloaded")
                         time.sleep(random.uniform(self.MIN_DELAY, self.MAX_DELAY))

@@ -26,6 +26,7 @@ export function CustomSelect({
   disabled = false,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [direction, setDirection] = useState<"up" | "down">("down");
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Close when clicking outside
@@ -39,6 +40,29 @@ export function CustomSelect({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleOpen = () => {
+    if (!isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      let spaceBelow = window.innerHeight - rect.bottom;
+
+      // Check distance to the bottom of the nearest scrollable container
+      const scrollParent = containerRef.current.closest(".overflow-y-auto");
+      if (scrollParent) {
+        const parentRect = scrollParent.getBoundingClientRect();
+        const parentSpaceBelow = parentRect.bottom - rect.bottom;
+        spaceBelow = Math.min(spaceBelow, parentSpaceBelow);
+      }
+
+      // If less than 240px space is available below, open upward
+      if (spaceBelow < 240) {
+        setDirection("up");
+      } else {
+        setDirection("down");
+      }
+    }
+    setIsOpen(!isOpen);
+  };
+
   const selectedOption = options.find((opt) => opt.value === value);
 
   return (
@@ -50,7 +74,7 @@ export function CustomSelect({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleOpen}
         className="w-full flex items-center justify-between px-4 py-2.5 rounded-none text-sm transition-all duration-150 cursor-pointer bg-rose-overlay border-2 border-rose-border text-rose-text hover:bg-rose-surface focus:outline-none focus:border-rose-pine shadow-[2px_2px_0px_0px_var(--color-shadow)] focus:shadow-[3px_3px_0px_0px_var(--color-foam)] text-left"
       >
         <span className={selectedOption ? "font-bold text-rose-text" : "text-rose-muted"}>
@@ -66,11 +90,13 @@ export function CustomSelect({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 4 }}
+            initial={{ opacity: 0, y: direction === "up" ? -4 : 4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
+            exit={{ opacity: 0, y: direction === "up" ? -4 : 4 }}
             transition={{ duration: 0.12, ease: "easeOut" }}
-            className="absolute z-[999] left-0 right-0 mt-2 bg-rose-surface border-2 border-rose-border shadow-[4px_4px_0px_0px_var(--color-shadow)] max-h-60 overflow-y-auto"
+            className={`absolute z-[999] left-0 right-0 bg-rose-surface border-2 border-rose-border shadow-[4px_4px_0px_0px_var(--color-shadow)] max-h-60 overflow-y-auto ${
+              direction === "up" ? "bottom-full mb-2" : "mt-2"
+            }`}
           >
             {options.length === 0 ? (
               <div className="px-4 py-3 text-xs text-rose-muted font-semibold">No options available</div>

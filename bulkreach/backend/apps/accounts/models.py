@@ -1,8 +1,12 @@
 """Accounts app — models for user profiles with Gmail OAuth token storage."""
+import logging
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
 from encrypted_model_fields.fields import EncryptedCharField
+
+logger = logging.getLogger(__name__)
+
 
 
 class UserProfile(AbstractUser):
@@ -107,3 +111,44 @@ class UserResume(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.user.username})"
+
+
+class AIUsageLog(models.Model):
+    """Logs individual Gemini API requests made by the user."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ai_usage_logs",
+    )
+    request_type = models.CharField(
+        max_length=100,
+        help_text="The action that triggered the Gemini request (e.g. Resume Parsing, Job Matching).",
+    )
+    model_name = models.CharField(
+        max_length=100,
+        default="gemini-2.5-flash",
+        help_text="The Gemini model used.",
+    )
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+        verbose_name = "AI Usage Log"
+        verbose_name_plural = "AI Usage Logs"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.request_type} @ {self.timestamp}"
+
+
+def log_ai_usage(user, request_type: str, model_name: str = "gemini-2.5-flash"):
+    """Creates a log entry for a Gemini API request."""
+    try:
+        AIUsageLog.objects.create(
+            user=user,
+            request_type=request_type,
+            model_name=model_name,
+        )
+    except Exception as e:
+        logger.error("Failed to log AI usage for %s: %s", user.username, e)
+

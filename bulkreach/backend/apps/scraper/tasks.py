@@ -23,34 +23,40 @@ def _extract_campaign_variables(template_html: str) -> list[str]:
 def _matches_freshness(posted_date: str, limit: str) -> bool:
     if not limit or limit == "any":
         return True
+    
+    # Normalize "past_24h" -> "24h", "past_week" -> "week", "past_month" -> "month"
+    limit = limit.replace("past_", "")
+    
     if not posted_date:
         return True
     
     date_lower = posted_date.lower().strip()
-    
-    if limit == "24h":
-        return any(w in date_lower for w in ["now", "hour", "1 day", "yesterday"])
-        
-    if limit == "week":
-        if any(w in date_lower for w in ["month", "30+", "15+", "10+", "weeks", "week ago"]):
-            if "1 week" in date_lower:
-                return True
-            return False
-        
+    if any(w in date_lower for w in ["now", "today", "hour", "minute"]):
+        days = 0
+    elif "yesterday" in date_lower:
+        days = 1
+    else:
         import re
         digits = re.findall(r'\d+', date_lower)
-        if digits:
-            days = int(digits[0])
-            if "day" in date_lower and days > 7:
-                return False
-        return True
+        val = int(digits[0]) if digits else 1
         
-    if limit == "month":
-        if any(w in date_lower for w in ["month", "30+"]):
-            if "1 month" in date_lower:
-                return True
-            return False
-        return True
+        if "day" in date_lower:
+            days = val
+        elif "week" in date_lower:
+            days = val * 7
+        elif "month" in date_lower:
+            days = val * 30
+        elif "year" in date_lower:
+            days = val * 365
+        else:
+            days = 0
+            
+    if limit == "24h":
+        return days <= 1
+    elif limit == "week":
+        return days <= 7
+    elif limit == "month":
+        return days <= 30
         
     return True
 
@@ -104,14 +110,18 @@ def _run_ai_matching(gemini_api_key, resume_text, contacts, campaign_variables, 
         return {}
     from apps.scraper.ai_matcher import evaluate_jobs_batch
     company_size_filter = getattr(job, "company_size", "any")
-    return evaluate_jobs_batch(
+    model_name = getattr(job.user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
+    result = evaluate_jobs_batch(
         gemini_api_key, 
         resume_text, 
         contacts, 
         campaign_variables, 
         company_size_filter,
-        gemini_model=getattr(job.user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
+        gemini_model=model_name
     )
+    from apps.accounts.models import log_ai_usage
+    log_ai_usage(job.user, "AI Job Matching", model_name=model_name)
+    return result
 
 
 @shared_task(
@@ -173,6 +183,12 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
                     resume_text_for_keyword,
                     gemini_model=getattr(job.user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
                 )
+                from apps.accounts.models import log_ai_usage
+                log_ai_usage(
+                    job.user,
+                    "AI Keyword Generation",
+                    model_name=getattr(job.user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
+                )
                 job.keywords = search_keywords
                 job.save(update_fields=["keywords"])
             else:
@@ -189,8 +205,11 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
             else getattr(job.user, "resume_text", "")
         )
         gemini_api_key = getattr(job.user, "gemini_api_key", "")
+        if job.use_ai_matching and not gemini_api_key:
+            raise ValueError("Gemini API key is missing. Please add your Gemini API key in Settings to use AI matching.")
 
         campaign_variables = []
+
         if job.campaign and job.campaign.template:
             campaign_variables = _extract_campaign_variables(job.campaign.template.html_body)
 
@@ -205,6 +224,7 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
                 keywords=search_keywords,
                 location=job.location,
                 max_results=job.max_results,
+                freshness=freshness_limit,
             )
         except Exception as scraper_exc:
             logger.error("Scraper %s failed: %s", job.platform, scraper_exc, exc_info=True)
@@ -234,6 +254,7 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
                     keywords=search_keywords,
                     location=job.location,
                     max_results=job.max_results,
+                    freshness=freshness_limit,
                 )
 
                 if fallback_results:
@@ -492,6 +513,13 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
             )
         )
 
+        from apps.accounts.models import log_ai_usage
+        log_ai_usage(
+            user,
+            "AI Company Details Enrichment",
+            model_name=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
+        )
+
         company_info = json.loads(response.text)
 
         domain = company_info.get("domain") or ""
@@ -567,6 +595,13 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
                     response_mime_type="application/json",
                     response_schema=EmployeesListSchema,
                 )
+            )
+
+            from apps.accounts.models import log_ai_usage
+            log_ai_usage(
+                user,
+                "AI Employee Insights Enrichment",
+                model_name=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
             )
 
             employees_data = json.loads(response2.text)
@@ -805,6 +840,9 @@ Respond ONLY with a valid JSON representation matching the requested schema.
                 response_schema=ProfileDetailsSchema,
             )
         )
+
+        from apps.accounts.models import log_ai_usage
+        log_ai_usage(user, "AI Profile Research", model_name=model_name)
 
         data = json.loads(response.text)
 

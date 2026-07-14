@@ -14,6 +14,7 @@ from .views import (
     GoogleLoginUrlView,
     LogoutView,
     UserResumeViewSet,
+    AIStatusView,
 )
 
 router = DefaultRouter()
@@ -25,6 +26,7 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="auth-logout"),
     path("token/refresh/", TokenRefreshView.as_view(), name="auth-token-refresh"),
     path("me/", MeView.as_view(), name="auth-me"),
+    path("ai-status/", AIStatusView.as_view(), name="auth-ai-status"),
     path("gmail/connect/", GmailConnectView.as_view(), name="gmail-connect"),
     path("gmail/connect/confirm/", GmailConnectConfirmView.as_view(), name="gmail-connect-confirm"),
     path("gmail/callback/", GmailCallbackView.as_view(), name="gmail-callback"),

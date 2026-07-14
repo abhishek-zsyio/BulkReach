@@ -61,13 +61,22 @@ class IndeedScraper(BaseScraper):
     MIN_DELAY = 1.0
     MAX_DELAY = 3.0
 
-    def scrape(self, keywords: str, location: str, max_results: int = 50) -> List[Dict]:
+    def scrape(self, keywords: str, location: str, max_results: int = 50, **kwargs) -> List[Dict]:
         """Scrape Indeed job listings and return structured contact data."""
         try:
             from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
         except ImportError:
             logger.error("Playwright not installed.")
             return []
+
+        freshness = kwargs.get("freshness", "any")
+        fromage_param = ""
+        if freshness == "24h":
+            fromage_param = "&fromage=1"
+        elif freshness == "week":
+            fromage_param = "&fromage=7"
+        elif freshness == "month":
+            fromage_param = "&fromage=30"
 
         encoded_kw = urllib.parse.quote(keywords)
         encoded_loc = urllib.parse.quote(location)
@@ -97,7 +106,7 @@ class IndeedScraper(BaseScraper):
                 page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
                 while len(results) < max_results:
-                    url = f"{self.BASE_URL}?q={encoded_kw}&l={encoded_loc}&start={start}"
+                    url = f"{self.BASE_URL}?q={encoded_kw}&l={encoded_loc}&start={start}{fromage_param}"
                     try:
                         page.goto(url, timeout=30_000, wait_until="domcontentloaded")
                         time.sleep(random.uniform(self.MIN_DELAY, self.MAX_DELAY))

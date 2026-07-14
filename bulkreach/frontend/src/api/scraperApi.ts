@@ -24,9 +24,9 @@ export const scraperApi = baseApi.injectEndpoints({
     }),
     getScrapeJobResults: builder.query<
       ScrapeJobResults,
-      { id: number; page?: number; page_size?: number; search?: string; has_email?: boolean; has_recruiter?: boolean; location?: string; salary?: string }
+      { id: number; page?: number; page_size?: number; search?: string; has_email?: boolean; has_recruiter?: boolean; location?: string; salary?: string; ordering?: string }
     >({
-      query: ({ id, page = 1, page_size = 100, search = "", has_email, has_recruiter, location, salary }) => {
+      query: ({ id, page = 1, page_size = 100, search = "", has_email, has_recruiter, location, salary, ordering }) => {
         const params = new URLSearchParams();
         params.append("page", page.toString());
         params.append("page_size", page_size.toString());
@@ -44,6 +44,9 @@ export const scraperApi = baseApi.injectEndpoints({
         }
         if (salary) {
           params.append("salary", salary);
+        }
+        if (ordering) {
+          params.append("ordering", ordering);
         }
         return `/scraper/jobs/${id}/results/?${params.toString()}`;
       },
@@ -63,6 +66,13 @@ export const scraperApi = baseApi.injectEndpoints({
     cancelScrapeJob: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/scraper/jobs/${id}/cancel/`,
+        method: "POST",
+      }),
+      invalidatesTags: ["ScrapeJob"],
+    }),
+    retryScrapeJob: builder.mutation<{ message: string; job: ScrapeJob }, number>({
+      query: (id) => ({
+        url: `/scraper/jobs/${id}/retry/`,
         method: "POST",
       }),
       invalidatesTags: ["ScrapeJob"],
@@ -178,6 +188,7 @@ export const {
   useGetScrapeJobResultsQuery,
   useImportScrapedContactsMutation,
   useCancelScrapeJobMutation,
+  useRetryScrapeJobMutation,
   useDeleteScrapeJobMutation,
   useClearScrapeJobsMutation,
   useUpdateScrapedContactMutation,

@@ -7,6 +7,7 @@ import {
   FileSpreadsheet,
   X,
   Loader2,
+  RefreshCw,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -38,6 +39,7 @@ import {
   useGetScrapeJobResultsQuery,
   useImportScrapedContactsMutation,
   useCancelScrapeJobMutation,
+  useRetryScrapeJobMutation,
   useDeleteScrapeJobMutation,
   useClearScrapeJobsMutation,
   useUpdateScrapedContactMutation,
@@ -130,6 +132,7 @@ export function ScraperDashboard() {
   const [hasRecruiterFilter, setHasRecruiterFilter] = useState(false);
   const [locationFilter, setLocationFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
+  const [sortBy, setSortBy] = useState("-id");
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
   const { data: resumes = [] } = useGetResumesQuery();
@@ -162,6 +165,7 @@ export function ScraperDashboard() {
       has_recruiter: hasRecruiterFilter || undefined,
       location: locationFilter.trim() || undefined,
       salary: salaryFilter.trim() || undefined,
+      ordering: sortBy || undefined,
     },
     {
       skip: !selectedJobId,
@@ -182,6 +186,7 @@ export function ScraperDashboard() {
   const [createScrapeJob, { isLoading: isStartingScrape }] = useCreateScrapeJobMutation();
   const [importContacts, { isLoading: isImporting }] = useImportScrapedContactsMutation();
   const [cancelScrapeJob, { isLoading: isCanceling }] = useCancelScrapeJobMutation();
+  const [retryScrapeJob, { isLoading: isRetrying }] = useRetryScrapeJobMutation();
   const [deleteScrapeJob] = useDeleteScrapeJobMutation();
   const [clearScrapeJobs] = useClearScrapeJobsMutation();
   const [updateScrapedContact] = useUpdateScrapedContactMutation();
@@ -406,6 +411,15 @@ export function ScraperDashboard() {
       toast.success("Scrape job stopped.");
     } catch (err: any) {
       toast.error(err?.data?.message || err?.message || "Failed to stop scrape job.");
+    }
+  };
+
+  const handleRetryScrape = async (jobId: number) => {
+    try {
+      await retryScrapeJob(jobId).unwrap();
+      toast.success("Scrape job restarted successfully.");
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || "Failed to retry scrape job.");
     }
   };
 
@@ -896,18 +910,34 @@ export function ScraperDashboard() {
                 )}
 
                 {selectedJob?.error_message && (
-                  <div className={`rounded-none p-4 border-2 text-xs font-semibold text-rose-text flex items-start gap-3 shadow-[3px_3px_0px_0px_var(--color-shadow)] ${selectedJob.status === "failed" ? "border-rose-love/50 bg-rose-love/15" : "border-rose-iris/50 bg-rose-iris/15"}`}>
-                    <div className={`w-6 h-6 rounded-none flex items-center justify-center shrink-0 border-2 border-rose-border ${selectedJob.status === "failed" ? "bg-rose-surface text-rose-love font-extrabold" : "bg-rose-surface text-rose-iris font-extrabold"}`}>
-                      {selectedJob.status === "failed" ? <X size={14} /> : <Zap size={14} />}
+                  <div className={`rounded-none p-4 border-2 text-xs font-semibold text-rose-text flex items-start justify-between gap-3 shadow-[3px_3px_0px_0px_var(--color-shadow)] ${selectedJob.status === "failed" ? "border-rose-love/50 bg-rose-love/15" : "border-rose-iris/50 bg-rose-iris/15"}`}>
+                    <div className="flex items-start gap-3">
+                      <div className={`w-6 h-6 rounded-none flex items-center justify-center shrink-0 border-2 border-rose-border ${selectedJob.status === "failed" ? "bg-rose-surface text-rose-love font-extrabold" : "bg-rose-surface text-rose-iris font-extrabold"}`}>
+                        {selectedJob.status === "failed" ? <X size={14} /> : <Zap size={14} />}
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-rose-text uppercase tracking-wider text-[10px]">
+                          {selectedJob.status === "failed" ? "Scraping failed or returned no matches" : "Search fallback notice"}
+                        </p>
+                        <p className="text-rose-muted mt-1 font-semibold leading-relaxed">
+                          {selectedJob.error_message}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-extrabold text-rose-text uppercase tracking-wider text-[10px]">
-                        {selectedJob.status === "failed" ? "Scraping failed or returned no matches" : "Search fallback notice"}
-                      </p>
-                      <p className="text-rose-muted mt-1 font-semibold leading-relaxed">
-                        {selectedJob.error_message}
-                      </p>
-                    </div>
+                    {selectedJob.status === "failed" && (
+                      <button
+                        onClick={() => handleRetryScrape(selectedJob.id)}
+                        disabled={isRetrying}
+                        className="btn-primary text-[10px] py-1.5 px-3 flex items-center gap-1.5 uppercase tracking-wider border border-rose-border shadow-[2px_2px_0px_0px_var(--color-shadow)] hover:shadow-[3px_3px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-0 active:translate-y-0 active:shadow-none disabled:opacity-50 shrink-0 self-center"
+                      >
+                        {isRetrying ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <RefreshCw size={12} />
+                        )}
+                        Retry
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -958,7 +988,7 @@ export function ScraperDashboard() {
                           type="button"
                           onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
                           className={`btn-secondary text-xs py-2.5 px-4 flex items-center gap-2 border-2 border-rose-border shadow-[2px_2px_0px_0px_var(--color-shadow)] hover:shadow-[3px_3px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-0 active:translate-y-0 active:shadow-none ${
-                            isFilterPanelOpen || hasEmailFilter || hasRecruiterFilter || locationFilter || salaryFilter
+                            isFilterPanelOpen || hasEmailFilter || hasRecruiterFilter || locationFilter || salaryFilter || sortBy !== "-id"
                               ? "bg-rose-overlay text-rose-text"
                               : ""
                           }`}
@@ -966,7 +996,7 @@ export function ScraperDashboard() {
                         >
                           <SlidersHorizontal size={14} />
                           Filters
-                          {(hasEmailFilter || hasRecruiterFilter || locationFilter || salaryFilter) && (
+                          {(hasEmailFilter || hasRecruiterFilter || locationFilter || salaryFilter || sortBy !== "-id") && (
                             <span className="w-2 h-2 bg-rose-love border border-rose-border animate-pulse" />
                           )}
                         </button>
@@ -1011,7 +1041,7 @@ export function ScraperDashboard() {
                     </div>
 
                     {/* Active Filter Chips */}
-                    {(hasEmailFilter || hasRecruiterFilter || locationFilter || salaryFilter) && (
+                    {(hasEmailFilter || hasRecruiterFilter || locationFilter || salaryFilter || sortBy !== "-id") && (
                       <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-rose-hl-low">
                         <span className="text-[10px] font-black uppercase text-rose-muted tracking-wider mr-1">Active Filters:</span>
                         {hasEmailFilter && (
@@ -1046,6 +1076,20 @@ export function ScraperDashboard() {
                             </button>
                           </span>
                         )}
+                        {sortBy !== "-id" && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-rose-foam/15 text-rose-pine border border-rose-pine/35 px-2 py-0.5 rounded-none shadow-[1px_1px_0px_0px_var(--color-shadow)]">
+                            Sort: {
+                              sortBy === "id" ? "Scraped Date (Oldest)" :
+                              sortBy === "-posted_date" ? "Date Posted (Newest)" :
+                              sortBy === "posted_date" ? "Date Posted (Oldest)" :
+                              sortBy === "name" ? "Name (A-Z)" :
+                              sortBy === "-name" ? "Name (Z-A)" : "Custom"
+                            }
+                            <button onClick={() => { setSortBy("-id"); setCurrentPage(1); }} className="hover:text-rose-love ml-0.5 transition-colors">
+                              <X size={10} className="stroke-[3]" />
+                            </button>
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1060,43 +1104,53 @@ export function ScraperDashboard() {
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden border-b-2 border-rose-border bg-rose-surface"
                       >
-                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end border-t border-rose-hl-low">
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end border-t border-rose-hl-low">
                           {/* Has Email Filter */}
-                          <div className="flex items-center gap-2.5 p-3.5 bg-rose-base/15 border-2 border-rose-border rounded-none shadow-[2px_2px_0px_0px_var(--color-shadow)]">
-                            <input
-                              id="filter-has-email"
-                              type="checkbox"
-                              checked={hasEmailFilter}
-                              onChange={(e) => {
-                                setHasEmailFilter(e.target.checked);
-                                setCurrentPage(1);
-                              }}
-                              className="rounded-none border-2 border-rose-border text-rose-pine focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
-                            />
-                            <label htmlFor="filter-has-email" className="text-xs font-black text-rose-text cursor-pointer select-none">
-                              Has Email
-                            </label>
+                          <div className="flex flex-col gap-1.5 w-full">
+                            <span className="text-[10px] font-black uppercase text-rose-muted tracking-wider">
+                              Email Status
+                            </span>
+                            <div className="flex items-center gap-2.5 h-[38px] px-3.5 bg-rose-base/15 border-2 border-rose-border rounded-none shadow-[2px_2px_0px_0px_var(--color-shadow)] w-full">
+                              <input
+                                id="filter-has-email"
+                                type="checkbox"
+                                checked={hasEmailFilter}
+                                onChange={(e) => {
+                                  setHasEmailFilter(e.target.checked);
+                                  setCurrentPage(1);
+                                }}
+                                className="rounded-none border-2 border-rose-border text-rose-pine focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                              />
+                              <label htmlFor="filter-has-email" className="text-xs font-black text-rose-text cursor-pointer select-none">
+                                Has Email
+                              </label>
+                            </div>
                           </div>
 
                           {/* Has Recruiter Filter */}
-                          <div className="flex items-center gap-2.5 p-3.5 bg-rose-base/15 border-2 border-rose-border rounded-none shadow-[2px_2px_0px_0px_var(--color-shadow)]">
-                            <input
-                              id="filter-has-recruiter"
-                              type="checkbox"
-                              checked={hasRecruiterFilter}
-                              onChange={(e) => {
-                                setHasRecruiterFilter(e.target.checked);
-                                setCurrentPage(1);
-                              }}
-                              className="rounded-none border-2 border-rose-border text-rose-pine focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
-                            />
-                            <label htmlFor="filter-has-recruiter" className="text-xs font-black text-rose-text cursor-pointer select-none">
-                              Has Recruiter Details
-                            </label>
+                          <div className="flex flex-col gap-1.5 w-full">
+                            <span className="text-[10px] font-black uppercase text-rose-muted tracking-wider">
+                              Recruiter Status
+                            </span>
+                            <div className="flex items-center gap-2.5 h-[38px] px-3.5 bg-rose-base/15 border-2 border-rose-border rounded-none shadow-[2px_2px_0px_0px_var(--color-shadow)] w-full">
+                              <input
+                                id="filter-has-recruiter"
+                                type="checkbox"
+                                checked={hasRecruiterFilter}
+                                onChange={(e) => {
+                                  setHasRecruiterFilter(e.target.checked);
+                                  setCurrentPage(1);
+                                }}
+                                className="rounded-none border-2 border-rose-border text-rose-pine focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer"
+                              />
+                              <label htmlFor="filter-has-recruiter" className="text-xs font-black text-rose-text cursor-pointer select-none">
+                                Has Recruiter Details
+                              </label>
+                            </div>
                           </div>
 
                           {/* Location Filter */}
-                          <div className="flex flex-col gap-1.5">
+                          <div className="flex flex-col gap-1.5 w-full">
                             <label htmlFor="filter-location" className="text-[10px] font-black uppercase text-rose-muted tracking-wider">
                               Filter Location
                             </label>
@@ -1114,7 +1168,7 @@ export function ScraperDashboard() {
                           </div>
 
                           {/* Salary Filter */}
-                          <div className="flex flex-col gap-1.5">
+                          <div className="flex flex-col gap-1.5 w-full">
                             <label htmlFor="filter-salary" className="text-[10px] font-black uppercase text-rose-muted tracking-wider">
                               Filter Salary
                             </label>
@@ -1131,9 +1185,32 @@ export function ScraperDashboard() {
                             />
                           </div>
 
+                          {/* Sort By Filter */}
+                          <div className="flex flex-col gap-1.5 w-full">
+                            <label htmlFor="filter-sort-by" className="text-[10px] font-black uppercase text-rose-muted tracking-wider">
+                              Sort Results By
+                            </label>
+                            <select
+                              id="filter-sort-by"
+                              value={sortBy}
+                              onChange={(e) => {
+                                setSortBy(e.target.value);
+                                setCurrentPage(1);
+                              }}
+                              className="select text-xs py-2.5 px-3 font-semibold bg-rose-surface cursor-pointer border-2 border-rose-border focus:outline-none focus:border-rose-pine"
+                            >
+                              <option value="-id">Scraped Date (Newest)</option>
+                              <option value="id">Scraped Date (Oldest)</option>
+                              <option value="-posted_date">Date Posted (Newest)</option>
+                              <option value="posted_date">Date Posted (Oldest)</option>
+                              <option value="name">Candidate Name (A-Z)</option>
+                              <option value="-name">Candidate Name (Z-A)</option>
+                            </select>
+                          </div>
+
                           {/* Reset Button */}
-                          {(hasEmailFilter || hasRecruiterFilter || locationFilter || salaryFilter) && (
-                            <div className="sm:col-span-2 md:col-span-4 flex justify-end pt-2">
+                          {(hasEmailFilter || hasRecruiterFilter || locationFilter || salaryFilter || sortBy !== "-id") && (
+                            <div className="sm:col-span-2 md:col-span-5 flex justify-end pt-2">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1141,11 +1218,12 @@ export function ScraperDashboard() {
                                   setHasRecruiterFilter(false);
                                   setLocationFilter("");
                                   setSalaryFilter("");
+                                  setSortBy("-id");
                                   setCurrentPage(1);
                                 }}
                                 className="text-xs font-black text-rose-love hover:underline uppercase tracking-wider transition-colors"
                               >
-                                Clear All Filters
+                                Clear All Filters & Sorting
                               </button>
                             </div>
                           )}
@@ -1644,6 +1722,7 @@ export function ScraperDashboard() {
         resumes={resumes}
         onLaunch={handleScrape}
         isStartingScrape={isStartingScrape}
+        hasGeminiKey={!!user?.has_gemini_api_key}
       />
 
       {/* ── Import Modal ── */}

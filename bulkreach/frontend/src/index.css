@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,98 +7,96 @@
 @layer base {
   :root {
     /* ══════════════════════════════════════════
-       🌲 EVERFOREST — Light Medium
-       github.com/sainnhe/everforest
+       🎨 ROSÉ PINE — Light Mode (Dawn)
     ══════════════════════════════════════════ */
-    --color-base: #f2efdf;          /* bg0 – warm parchment */
-    --color-base-rgb: 242, 239, 223;
-    --color-surface: #fffbef;       /* bg_dim – lightest warm cream */
-    --color-surface-rgb: 255, 251, 239;
-    --color-overlay: #edeada;       /* bg1 – slightly darker cream */
-    --color-overlay-rgb: 237, 234, 218;
-    --color-muted: #859289;         /* grey1 – muted warm grey */
-    --color-muted-rgb: 133, 146, 137;
-    --color-subtle: #5c6a72;        /* fg – main foreground */
-    --color-subtle-rgb: 92, 106, 114;
-    --color-text: #3a3f3f;          /* bg_visual darkened for borders */
-    --color-text-rgb: 58, 63, 63;
+    --color-base: #faf4ed;          /* Warm ivory paper base */
+    --color-base-rgb: 250, 244, 237;
+    --color-surface: #fffaf3;       /* Warm cream surface card face */
+    --color-surface-rgb: 255, 250, 243;
+    --color-overlay: #f2e9e1;       /* Muted warm cream overlay */
+    --color-overlay-rgb: 242, 233, 225;
+    --color-muted: #797593;         /* Earthy violet-grey secondary labels */
+    --color-muted-rgb: 121, 117, 147;
+    --color-subtle: #575279;        /* Deep violet/slate */
+    --color-subtle-rgb: 87, 82, 121;
+    --color-text: #232136;          /* Deep ink-slate body text and outlines */
+    --color-text-rgb: 35, 33, 54;
 
-    /* ── Everforest Light Accent Palette ── */
-    --color-love: #f85552;          /* red */
-    --color-love-rgb: 248, 85, 82;
-    --color-gold: #dfa000;          /* yellow */
-    --color-gold-rgb: 223, 160, 0;
-    --color-rose: #df69ba;          /* purple */
-    --color-rose-rgb: 223, 105, 186;
-    --color-pine: #8da101;          /* green — primary */
-    --color-pine-rgb: 141, 161, 1;
-    --color-foam: #35a77c;          /* aqua */
-    --color-foam-rgb: 53, 167, 124;
-    --color-iris: #3a94c5;          /* blue */
-    --color-iris-rgb: 58, 148, 197;
+    /* ── Rosé Pine Light Accents ── */
+    --color-love: #b4637a;          /* Earthy rose red (failed) */
+    --color-love-rgb: 180, 99, 122;
+    --color-gold: #ea9d34;          /* Warm gold yellow (queued) */
+    --color-gold-rgb: 234, 157, 52;
+    --color-rose: #d7827e;          /* Dusty rose (highlights) */
+    --color-rose-rgb: 215, 130, 126;
+    --color-pine: #286983;          /* Slate blue-green (primary action) */
+    --color-pine-rgb: 40, 105, 131;
+    --color-foam: #56949f;          /* Dusty teal (success/done) */
+    --color-foam-rgb: 86, 148, 159;
+    --color-iris: #907aa9;          /* Muted lavender violet (active) */
+    --color-iris-rgb: 144, 122, 169;
 
-    /* ── Everforest Light Highlight Levels ── */
-    --color-hl-low: #e5dfc5;        /* bg2 */
-    --color-hl-low-rgb: 229, 223, 197;
-    --color-hl-med: #c9c19c;        /* bg4 / selection */
-    --color-hl-med-rgb: 201, 193, 156;
-    --color-hl-high: #3a3f3f;       /* border shadow */
-    --color-hl-high-rgb: 58, 63, 63;
+    /* ── Rosé Pine Highlight Levels ── */
+    --color-hl-low: #f2e9e1;        /* Muted overlay */
+    --color-hl-low-rgb: 242, 233, 225;
+    --color-hl-med: #e0def4;        /* Selection highlight */
+    --color-hl-med-rgb: 224, 222, 244;
+    --color-hl-high: #232136;       /* Ink shadow */
+    --color-hl-high-rgb: 35, 33, 54;
 
     /* ── Semantic border & shadow tokens ── */
-    --color-border: #3a3f3f;        /* light: dark border for contrast */
-    --color-border-rgb: 58, 63, 63;
-    --color-shadow: #3a3f3f;        /* light: offset shadow color */
-    --color-shadow-rgb: 58, 63, 63;
+    --color-border: #232136;        /* Deeps ink-slate borders */
+    --color-border-rgb: 35, 33, 54;
+    --color-shadow: #232136;        /* Deeps ink-slate shadows */
+    --color-shadow-rgb: 35, 33, 54;
 
     color-scheme: light;
   }
 
   .dark {
     /* ══════════════════════════════════════════
-       🌲 EVERFOREST — Dark Medium
-       github.com/sainnhe/everforest
+       🎨 ROSÉ PINE — Dark Mode (Moon)
     ══════════════════════════════════════════ */
-    --color-base: #2d353b;          /* bg0 – main dark background */
-    --color-base-rgb: 45, 53, 59;
-    --color-surface: #272e33;       /* bg_dim – slightly darker panel */
-    --color-surface-rgb: 39, 46, 51;
-    --color-overlay: #374145;       /* bg1 – raised surfaces */
-    --color-overlay-rgb: 55, 65, 69;
-    --color-muted: #7a8478;         /* grey0 */
-    --color-muted-rgb: 122, 132, 120;
-    --color-subtle: #9da9a0;        /* grey2 – brighter muted */
-    --color-subtle-rgb: 157, 169, 160;
-    --color-text: #d3c6aa;          /* fg – warm cream foreground */
-    --color-text-rgb: 211, 198, 170;
+    --color-base: #191724;          /* Deep violet-black base background */
+    --color-base-rgb: 25, 23, 36;
+    --color-surface: #1f1d2e;       /* Deep purple-slate card face */
+    --color-surface-rgb: 31, 29, 46;
+    --color-overlay: #26233a;       /* Dark slate overlay */
+    --color-overlay-rgb: 38, 35, 58;
+    --color-muted: #908caa;         /* Muted lavender-grey secondary text */
+    --color-muted-rgb: 144, 140, 170;
+    --color-subtle: #6e6a86;        /* Deeper slate dividers */
+    --color-subtle-rgb: 110, 106, 134;
+    --color-text: #e0def4;          /* Warm ivory primary text */
+    --color-text-rgb: 224, 222, 244;
 
-    /* ── Everforest Dark Accent Palette ── */
-    --color-love: #e67e80;          /* red */
-    --color-love-rgb: 230, 126, 128;
-    --color-gold: #dbbc7f;          /* yellow */
-    --color-gold-rgb: 219, 188, 127;
-    --color-rose: #d699b6;          /* purple */
-    --color-rose-rgb: 214, 153, 182;
-    --color-pine: #a7c080;          /* green — primary */
-    --color-pine-rgb: 167, 192, 128;
-    --color-foam: #83c092;          /* aqua */
-    --color-foam-rgb: 131, 192, 146;
-    --color-iris: #7fbbb3;          /* blue */
-    --color-iris-rgb: 127, 187, 179;
+    /* ── Rosé Pine Dark Accents ── */
+    --color-love: #eb6f92;          /* Rose red */
+    --color-love-rgb: 235, 111, 146;
+    --color-gold: #f6c177;          /* Gold yellow */
+    --color-gold-rgb: 246, 193, 119;
+    --color-rose: #ebbcba;          /* Dusty rose */
+    --color-rose-rgb: 235, 188, 186;
+    --color-pine: #31748f;          /* Pine green-blue */
+    --color-pine-rgb: 49, 116, 143;
+    --color-foam: #9ccfd8;          /* Foam teal */
+    --color-foam-rgb: 156, 207, 216;
+    --color-iris: #c4a7e7;          /* Iris purple */
+    --color-iris-rgb: 196, 167, 231;
 
-    /* ── Everforest Dark Highlight Levels ── */
-    --color-hl-low: #3d484d;        /* bg2 */
-    --color-hl-low-rgb: 61, 72, 77;
-    --color-hl-med: #4f5b58;        /* bg4 / selection */
-    --color-hl-med-rgb: 79, 91, 88;
-    --color-hl-high: #1e2326;       /* hard dark shadow */
-    --color-hl-high-rgb: 30, 35, 38;
+    /* ── Rosé Pine Dark Highlight Levels ── */
+    --color-hl-low: #2a2837;        /* Raised dark surfaces */
+    --color-hl-low-rgb: 42, 40, 55;
+    --color-hl-med: #403c58;        /* Selection highlight */
+    --color-hl-med-rgb: 64, 60, 88;
+    --color-hl-high: #e0def4;       /* Ivory text highlight */
+    --color-hl-high-rgb: 224, 222, 244;
 
     /* ── Semantic border & shadow tokens ── */
-    --color-border: #4f5b58;        /* dark: soft bg4 — not the cream fg! */
-    --color-border-rgb: 79, 91, 88;
-    --color-shadow: #1e2326;        /* dark: hard dark offset shadow */
-    --color-shadow-rgb: 30, 35, 38;
+    --color-border: #403c58;        /* dark: premium muted purple-slate border to prevent glare */
+    --color-border-rgb: 64, 60, 88;
+    --color-shadow: #12101a;        /* dark: very deep solid dark shadow */
+    --color-shadow-rgb: 18, 16, 26;
 
     color-scheme: dark;
   }
@@ -120,6 +118,15 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6, .brand-title {
+    font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  code, pre, .mono-label {
+    font-family: "Space Mono", "Fira Code", monospace;
   }
 
   ::-webkit-scrollbar {
@@ -445,6 +452,19 @@
 
   .table tr:hover td {
     background: var(--color-hl-low);
+  }
+
+  /* ─── Tactile Hover & Click Physics ─── */
+  .tactile-press {
+    transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .tactile-press:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0px 0px var(--color-shadow);
+  }
+  .tactile-press:active:not(:disabled) {
+    transform: translate(0px, 0px);
+    box-shadow: 0px 0px 0px 0px var(--color-shadow);
   }
 }
 

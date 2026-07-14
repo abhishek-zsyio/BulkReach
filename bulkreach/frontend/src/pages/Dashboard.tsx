@@ -4,12 +4,14 @@ import { Send, XCircle, BarChart3, Plus, Zap, Inbox, Upload, Briefcase, Trash2, 
 import { useGetCampaignsQuery, useGetGmailAuthUrlQuery, useDisconnectGmailMutation } from "@/api/campaignApi";
 import { CampaignCard } from "@/components/campaign/CampaignCard";
 import { useGetResumesQuery, useUploadResumeMutation, useDeleteResumeMutation } from "@/api/resumeApi";
+import { useGetAIStatusQuery } from "@/api/aiApi";
 import { DropzoneUpload } from "@/components/spreadsheet/DropzoneUpload";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { useConfirm } from "@/components/ui/dialogs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { WindowPanel } from "@/components/ui/WindowPanel";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -31,6 +33,10 @@ export function Dashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { confirm, modal } = useConfirm();
+
+  const { data: aiStatus, refetch: refetchAIStatus } = useGetAIStatusQuery(undefined, {
+    pollingInterval: 10000,
+  });
 
   // RTK Query hooks for Gmail auth — replaces raw fetch() calls
   const { refetch: fetchGmailAuthUrl } = useGetGmailAuthUrlQuery("dashboard", {
@@ -97,6 +103,7 @@ export function Dashboard() {
       setResumeFile(null);
       uploadResumeDialogRef.current?.close();
       refetchResumes();
+      refetchAIStatus?.();
     } catch (err: any) {
       toast.error(err?.data?.message || err?.message || "Failed to upload resume.");
     }
@@ -251,11 +258,11 @@ export function Dashboard() {
                   style={{ background: accentColor }}
                 />
                 <div className={`w-12 h-12 rounded-none flex items-center justify-center border-2 border-rose-border shrink-0 ${bgClass}`}>
-                  <Icon size={20} />
+                  <Icon size={20} style={{ color: accentColor }} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-rose-text tracking-tight">{value}</p>
-                  <p className="text-xs text-rose-muted mt-0.5 font-bold uppercase tracking-wider">{label}</p>
+                  <p className="font-display text-2xl font-black text-rose-text tracking-tight">{value}</p>
+                  <p className="font-display text-[10px] text-rose-muted mt-0.5 font-extrabold uppercase tracking-wider">{label}</p>
                 </div>
               </div>
             ))}
@@ -263,48 +270,51 @@ export function Dashboard() {
 
           {/* Outreach Performance Chart */}
           {chartData.length > 0 && (
-            <motion.div variants={itemVariants} className="card bg-rose-surface">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-base font-bold text-rose-text">Outreach Performance</h3>
-                  <p className="text-xs text-rose-muted mt-0.5">Total emails sent, opened, and failures per campaign</p>
+            <motion.div variants={itemVariants}>
+              <WindowPanel title="Outreach Performance" badge="Analytics">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                  <div>
+                    <h3 className="font-display text-sm font-black text-rose-text uppercase tracking-wider">Campaign Deliverability</h3>
+                    <p className="text-[11px] text-rose-muted font-bold">Total emails sent, opened, and failures per campaign</p>
+                  </div>
+                  <div className="flex items-center gap-4 text-[10px] font-extrabold uppercase tracking-widest">
+                    <span className="flex items-center gap-1.5 text-rose-pine">
+                      <span className="w-2.5 h-2.5 bg-rose-pine border border-rose-border" /> Sent
+                    </span>
+                    <span className="flex items-center gap-1.5 text-rose-foam">
+                      <span className="w-2.5 h-2.5 bg-rose-foam border border-rose-border" /> Opened
+                    </span>
+                    <span className="flex items-center gap-1.5 text-rose-love">
+                      <span className="w-2.5 h-2.5 bg-rose-love border border-rose-border" /> Failed
+                    </span>
+                  </div>
                 </div>
-                 <div className="flex items-center gap-4 text-xs font-semibold">
-                  <span className="flex items-center gap-1.5 text-rose-pine font-bold uppercase tracking-wider text-[10px]">
-                    <span className="w-2.5 h-2.5 bg-rose-pine border border-rose-border" /> Sent
-                  </span>
-                  <span className="flex items-center gap-1.5 text-rose-foam font-bold uppercase tracking-wider text-[10px]">
-                    <span className="w-2.5 h-2.5 bg-rose-foam border border-rose-border" /> Opened
-                  </span>
-                  <span className="flex items-center gap-1.5 text-rose-love font-bold uppercase tracking-wider text-[10px]">
-                    <span className="w-2.5 h-2.5 bg-rose-love border border-rose-border" /> Failed
-                  </span>
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="1 5" stroke="var(--color-border)" vertical={false} opacity={0.3} />
+                      <XAxis dataKey="name" stroke="var(--color-muted)" fontSize={10} fontWeight={800} tickLine={{ stroke: "var(--color-border)", strokeWidth: 1.5 }} axisLine={{ stroke: "var(--color-border)", strokeWidth: 2 }} />
+                      <YAxis stroke="var(--color-muted)" fontSize={10} fontWeight={800} tickLine={{ stroke: "var(--color-border)", strokeWidth: 1.5 }} axisLine={{ stroke: "var(--color-border)", strokeWidth: 2 }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "var(--color-surface)",
+                          borderColor: "var(--color-border)",
+                          borderRadius: "0px",
+                          color: "var(--color-text)",
+                          fontSize: "11px",
+                          fontWeight: 800,
+                          borderWidth: "2px",
+                          boxShadow: "3px 3px 0px 0px var(--color-shadow)"
+                        }}
+                        labelClassName="font-display font-extrabold uppercase text-[10px] tracking-wide mb-1"
+                      />
+                      <Bar dataKey="Sent" fill="var(--color-pine)" stroke="var(--color-border)" strokeWidth={2} radius={0} maxBarSize={25} />
+                      <Bar dataKey="Opened" fill="var(--color-foam)" stroke="var(--color-border)" strokeWidth={2} radius={0} maxBarSize={25} />
+                      <Bar dataKey="Failed" fill="var(--color-love)" stroke="var(--color-border)" strokeWidth={2} radius={0} maxBarSize={25} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              </div>
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-hl-med)" vertical={false} />
-                    <XAxis dataKey="name" stroke="var(--color-muted)" fontSize={10} fontWeight={800} tickLine={false} axisLine={false} />
-                    <YAxis stroke="var(--color-muted)" fontSize={10} fontWeight={800} tickLine={false} axisLine={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--color-surface)",
-                        borderColor: "var(--color-text)",
-                        borderRadius: "0px",
-                        color: "var(--color-text)",
-                        fontSize: "12px",
-                        fontWeight: 800,
-                        borderWidth: "2px",
-                        boxShadow: "none"
-                      }}
-                    />
-                    <Bar dataKey="Sent" fill="var(--color-pine)" stroke="var(--color-text)" strokeWidth={2} radius={0} maxBarSize={30} />
-                    <Bar dataKey="Opened" fill="var(--color-foam)" stroke="var(--color-text)" strokeWidth={2} radius={0} maxBarSize={30} />
-                    <Bar dataKey="Failed" fill="var(--color-love)" stroke="var(--color-text)" strokeWidth={2} radius={0} maxBarSize={30} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              </WindowPanel>
             </motion.div>
           )}
 
@@ -390,203 +400,269 @@ export function Dashboard() {
         {/* Right Column - Side Panels (1/3 width) */}
         <div className="space-y-6">
           {/* Sender Connection Status Card */}
-          <motion.div
-            variants={itemVariants}
-            className="card space-y-4 relative overflow-hidden bg-rose-surface"
-          >
-            <div className="absolute top-0 left-0 right-0 h-[4px] bg-gradient-brand" />
-            <h3 className="font-extrabold text-rose-text text-sm flex items-center gap-2">
-              <Mail size={16} className="text-rose-pine stroke-[2.5]" />
-              Outreach Sender Account
-            </h3>
-
-            {user?.gmail_connected ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3.5 p-3 bg-rose-overlay/30 border-2 border-rose-border relative overflow-hidden">
-                  {/* Small absolute top bar showing active connection status */}
-                  <span className="absolute top-0 left-0 right-0 h-[2px] bg-rose-foam" />
-                  
-                  <div className="w-10 h-10 rounded-none bg-rose-foam/10 border-2 border-rose-foam/30 flex items-center justify-center text-rose-foam font-black text-lg shrink-0">
-                    {user?.sender_email ? user.sender_email[0].toUpperCase() : "G"}
+          <motion.div variants={itemVariants}>
+            <WindowPanel title="Outreach Sender" badge="Connection">
+              {user?.gmail_connected ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3.5 p-3 bg-rose-overlay/30 border-2 border-rose-border relative overflow-hidden">
+                    {/* Small absolute top bar showing active connection status */}
+                    <span className="absolute top-0 left-0 right-0 h-[2px] bg-rose-foam" />
+                    
+                    <div className="w-10 h-10 rounded-none bg-rose-foam/10 border-2 border-rose-foam/30 flex items-center justify-center text-rose-foam font-black text-lg shrink-0">
+                      {user?.sender_email ? user.sender_email[0].toUpperCase() : "G"}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-black text-rose-text truncate leading-none mb-1.5">{user?.sender_email}</p>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-rose-foam/15 text-rose-foam border border-rose-foam/30">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-foam animate-pulse" />
+                        Active Connection
+                      </span>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-black text-rose-text truncate leading-none mb-1.5">{user?.sender_email}</p>
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-rose-foam/15 text-rose-foam border border-rose-foam/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-foam animate-pulse" />
-                      Active Connection
-                    </span>
+
+                  {/* Features checklist to show utility */}
+                  <div className="space-y-2 text-[10px] text-rose-muted font-bold pt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-rose-foam font-black">✓</span>
+                      <span>Automated campaign dispatch enabled</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-rose-foam font-black">✓</span>
+                      <span>Smart open & bounce tracking active</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-rose-foam font-black">✓</span>
+                      <span>Gmail API delivery limits synced</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      onClick={handleDisconnectGmail}
+                      className="w-full py-2.5 text-[10px] font-black uppercase tracking-wider text-rose-love hover:text-white border-2 border-rose-border hover:border-rose-love hover:bg-rose-love hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_0px_var(--color-shadow)] active:translate-x-0 active:translate-y-0 active:shadow-none transition-all duration-150 rounded-none bg-rose-overlay/40"
+                    >
+                      Disconnect Gmail Account
+                    </button>
                   </div>
                 </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-xs text-rose-muted leading-relaxed font-semibold">
+                    Connect your Gmail account to dispatch automated outreach campaigns directly. Setup takes less than 30 seconds.
+                  </p>
 
-                {/* Features checklist to show utility */}
-                <div className="space-y-2 text-[10px] text-rose-muted font-bold pt-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-rose-foam font-black">✓</span>
-                    <span>Automated campaign dispatch enabled</span>
+                  {/* Benefits checklist when not connected */}
+                  <div className="space-y-2 text-[10px] text-rose-muted font-bold">
+                    <div className="flex items-center gap-2">
+                      <span className="text-rose-pine font-black">✦</span>
+                      <span>Send up to 500 personalized emails daily</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-rose-pine font-black">✦</span>
+                      <span>Automatic delivery delay & throttling</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-rose-pine font-black">✦</span>
+                      <span>Dynamic custom field variable insertion</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-rose-foam font-black">✓</span>
-                    <span>Smart open & bounce tracking active</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-rose-foam font-black">✓</span>
-                    <span>Gmail API delivery limits synced</span>
-                  </div>
-                </div>
 
-                <div className="pt-2">
                   <button
-                    onClick={handleDisconnectGmail}
-                    className="w-full py-2.5 text-[10px] font-black uppercase tracking-wider text-rose-love hover:text-white border-2 border-rose-border hover:border-rose-love hover:bg-rose-love hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_0px_var(--color-shadow)] active:translate-x-0 active:translate-y-0 active:shadow-none transition-all duration-150 rounded-none bg-rose-overlay/40"
+                    onClick={handleConnectGmail}
+                    className="btn-primary w-full py-2.5 text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_var(--color-shadow)] hover:shadow-[5px_5px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] transition-all duration-200"
                   >
-                    Disconnect Gmail Account
+                    <Zap size={13} className="stroke-[3] animate-pulse" /> Connect Gmail Account
                   </button>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-xs text-rose-muted leading-relaxed font-semibold">
-                  Connect your Gmail account to dispatch automated outreach campaigns directly. Setup takes less than 30 seconds.
-                </p>
+              )}
+            </WindowPanel>
+          </motion.div>
 
-                {/* Benefits checklist when not connected */}
-                <div className="space-y-2 text-[10px] text-rose-muted font-bold">
-                  <div className="flex items-center gap-2">
-                    <span className="text-rose-pine font-black">✦</span>
-                    <span>Send up to 500 personalized emails daily</span>
+          {/* AI Engine Status Card */}
+          <motion.div variants={itemVariants}>
+            <WindowPanel title="AI Engine Status" badge="Gemini">
+              {aiStatus ? (
+                <div className="space-y-4">
+                  {/* Status Bar */}
+                  <div className="flex items-center gap-3.5 p-3 bg-rose-overlay/30 border-2 border-rose-border relative overflow-hidden">
+                    <span className={`absolute top-0 left-0 right-0 h-[2px] ${aiStatus.has_key ? 'bg-rose-foam' : 'bg-rose-love'}`} />
+                    
+                    <div className={`w-10 h-10 rounded-none border-2 flex items-center justify-center font-black text-lg shrink-0 ${aiStatus.has_key ? 'bg-rose-foam/10 border-rose-foam/30 text-rose-foam' : 'bg-rose-love/10 border-rose-love/30 text-rose-love'}`}>
+                      🧠
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-black text-rose-text truncate leading-none mb-1.5">{aiStatus.model}</p>
+                      {aiStatus.has_key ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-rose-foam/15 text-rose-foam border border-rose-foam/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-foam animate-pulse" />
+                          API Key Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-rose-love/15 text-rose-love border border-rose-love/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-love" />
+                          API Key Missing
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-rose-pine font-black">✦</span>
-                    <span>Automatic delivery delay & throttling</span>
+
+                  {/* Quota Progress */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-rose-muted">
+                      <span>Daily API Requests</span>
+                      <span className="text-rose-text font-mono font-black">{aiStatus.requests_today} / {aiStatus.daily_limit}</span>
+                    </div>
+                    {/* Styled Neobrutalist Progress Bar */}
+                    <div className="w-full h-3 bg-rose-overlay border-2 border-rose-border rounded-none overflow-hidden relative shadow-[1px_1px_0px_0px_var(--color-shadow)]">
+                      <motion.div 
+                        className="h-full bg-gradient-to-r from-rose-pine to-rose-iris"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((aiStatus.requests_today / aiStatus.daily_limit) * 100, 100)}%` }}
+                        transition={{ type: "spring", stiffness: 80, damping: 15 }}
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-rose-pine font-black">✦</span>
-                    <span>Dynamic custom field variable insertion</span>
+
+                  {/* Recent AI Activities */}
+                  <div className="pt-2 border-t border-rose-hl-med">
+                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-rose-muted mb-2">Recent AI Activity</p>
+                    {aiStatus.recent_logs.length === 0 ? (
+                      <p className="text-[10px] text-rose-subtle font-medium italic">No AI activity recorded today.</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {aiStatus.recent_logs.map((log) => {
+                          const dateObj = new Date(log.timestamp);
+                          const formattedTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                          return (
+                            <div key={log.id} className="flex items-center justify-between text-[10px] text-rose-text font-semibold">
+                              <span className="truncate max-w-[140px]">✦ {log.request_type}</span>
+                              <span className="text-rose-muted font-mono text-[9px]">{formattedTime}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
+                  
+                  {!aiStatus.has_key && (
+                    <div className="pt-1">
+                      <button
+                        onClick={() => navigate("/settings")}
+                        className="btn-secondary w-full py-2 text-[10px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5"
+                      >
+                        Set API Key in Settings
+                      </button>
+                    </div>
+                  )}
                 </div>
-
-                <button
-                  onClick={handleConnectGmail}
-                  className="btn-primary w-full py-2.5 text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_var(--color-shadow)] hover:shadow-[5px_5px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] transition-all duration-200"
-                >
-                  <Zap size={13} className="stroke-[3] animate-pulse" /> Connect Gmail Account
-                </button>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center justify-center py-6">
+                  <div className="w-6 h-6 border-2 border-rose-pine border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </WindowPanel>
           </motion.div>
 
           {/* Quick Actions Card */}
-          <motion.div
-            variants={itemVariants}
-            className="card space-y-4 bg-rose-surface relative overflow-hidden"
-          >
-            {/* Subtle gradient top bar */}
-            <span className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-rose-pine via-rose-iris to-rose-foam" />
-            <h3 className="font-extrabold text-rose-text text-sm flex items-center gap-2">
-              <Plus size={16} className="text-rose-pine stroke-[2.5]" />
-              Quick Actions
-            </h3>
-            <div className="grid grid-cols-1 gap-2">
-              {/* Primary action gets extra visual emphasis */}
-              <button
-                onClick={() => navigate("/campaigns/new")}
-                className="relative overflow-hidden btn-primary py-2.5 justify-start text-xs font-extrabold uppercase tracking-wider w-full group/qa shadow-[3px_3px_0px_0px_var(--color-shadow)] hover:shadow-[5px_5px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] transition-all duration-200"
-              >
-                <Plus size={14} className="stroke-[3] transition-transform duration-200 group-hover/qa:rotate-90" /> New Outreach Campaign
-                <span className="ml-auto text-[9px] opacity-60 font-mono">→</span>
-              </button>
-              <button
-                onClick={() => navigate("/templates/new/edit")}
-                className="btn-secondary py-2.5 justify-start text-xs font-extrabold uppercase tracking-wider w-full"
-              >
-                <FileText size={14} className="stroke-[2.5]" /> Create Email Template
-              </button>
-              <button
-                onClick={() => navigate("/scraper")}
-                className="btn-secondary py-2.5 justify-start text-xs font-extrabold uppercase tracking-wider w-full"
-              >
-                <Search size={14} className="stroke-[2.5]" /> Launch Job Scraper
-              </button>
-            </div>
+          <motion.div variants={itemVariants}>
+            <WindowPanel title="Quick Actions" badge="Utility">
+              <div className="grid grid-cols-1 gap-2 mt-1">
+                {/* Primary action gets extra visual emphasis */}
+                <button
+                  onClick={() => navigate("/campaigns/new")}
+                  className="relative overflow-hidden btn-primary py-2.5 justify-start text-xs font-extrabold uppercase tracking-wider w-full group/qa shadow-[3px_3px_0px_0px_var(--color-shadow)] hover:shadow-[5px_5px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] transition-all duration-200"
+                >
+                  <Plus size={14} className="stroke-[3] transition-transform duration-200 group-hover/qa:rotate-90" /> New Outreach Campaign
+                  <span className="ml-auto text-[9px] opacity-60 font-mono">→</span>
+                </button>
+                <button
+                  onClick={() => navigate("/templates/new/edit")}
+                  className="btn-secondary py-2.5 justify-start text-xs font-extrabold uppercase tracking-wider w-full"
+                >
+                  <FileText size={14} className="stroke-[2.5]" /> Create Email Template
+                </button>
+                <button
+                  onClick={() => navigate("/scraper")}
+                  className="btn-secondary py-2.5 justify-start text-xs font-extrabold uppercase tracking-wider w-full"
+                >
+                  <Search size={14} className="stroke-[2.5]" /> Launch Job Scraper
+                </button>
+              </div>
+            </WindowPanel>
           </motion.div>
 
           {/* Quick Resumes Widget */}
-          <motion.div variants={itemVariants} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-rose-text">My Resumes</h2>
-              <button
-                onClick={() => uploadResumeDialogRef.current?.showModal()}
-                className="text-sm font-bold text-rose-pine hover:text-rose-iris transition-colors flex items-center gap-1"
-              >
-                <Plus size={14} className="stroke-[3]" /> Upload
-              </button>
-            </div>
-
-            <div className="card flex flex-col justify-between h-[320px] max-h-[320px] bg-rose-surface relative overflow-hidden">
-               {/* Accent top gradient stripe */}
-               <span className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-rose-iris via-rose-rose to-rose-gold" />
-              {resumes.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center flex-1 py-4">
-                  <div className="w-12 h-12 rounded-none flex items-center justify-center mb-3 bg-rose-overlay border-2 border-rose-border text-rose-text">
-                    <Briefcase size={20} />
-                  </div>
-                  <p className="text-rose-text font-bold text-sm mb-1">No resumes uploaded</p>
-                  <p className="text-rose-muted text-[11px] mb-4 max-w-[180px] mx-auto">Upload a resume profile to start AI matching.</p>
-                  <button
-                    onClick={() => uploadResumeDialogRef.current?.showModal()}
-                    className="btn-primary text-xs px-3 py-1.5"
-                  >
-                    <Plus size={12} /> Upload Resume
-                  </button>
-                </div>
-              ) : (
-                <div className="flex-grow overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                  {resumes.slice(0, 4).map((r) => (
-                    <div
-                      key={r.id}
-                      className="flex items-center justify-between p-2.5 rounded-none bg-rose-overlay/40 border-2 border-rose-border hover:border-rose-pine transition-colors"
+          <motion.div variants={itemVariants}>
+            <WindowPanel title="My Resumes" badge="Profiles">
+              <div className="flex flex-col justify-between h-[280px] max-h-[280px]">
+                {resumes.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center text-center flex-1 py-4">
+                    <div className="w-12 h-12 rounded-none flex items-center justify-center mb-3 bg-rose-overlay border-2 border-rose-border text-rose-text">
+                      <Briefcase size={20} />
+                    </div>
+                    <p className="text-rose-text font-bold text-sm mb-1">No resumes uploaded</p>
+                    <p className="text-rose-muted text-[11px] mb-4 max-w-[180px] mx-auto">Upload a resume profile to start AI matching.</p>
+                    <button
+                      onClick={() => uploadResumeDialogRef.current?.showModal()}
+                      className="btn-primary text-xs px-3 py-1.5"
                     >
-                      <div className="min-w-0 flex-1 pr-2">
-                        <p className="text-xs font-bold text-rose-text truncate">{r.name}</p>
-                        {r.file ? (
-                          <a
-                            href={r.file}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[10px] text-rose-subtle hover:text-rose-iris truncate block underline font-mono font-medium mt-0.5"
+                      <Plus size={12} /> Upload Resume
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex-grow overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                      {resumes.slice(0, 4).map((r) => (
+                        <div
+                          key={r.id}
+                          className="flex items-center justify-between p-2.5 rounded-none bg-rose-overlay/40 border-2 border-rose-border hover:border-rose-pine transition-colors"
+                        >
+                          <div className="min-w-0 flex-1 pr-2">
+                            <p className="text-xs font-bold text-rose-text truncate">{r.name}</p>
+                            {r.file ? (
+                              <a
+                                href={r.file}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[10px] text-rose-subtle hover:text-rose-iris truncate block underline font-mono font-medium mt-0.5"
+                              >
+                                {r.file.split("/").pop()}
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-rose-subtle font-mono font-medium mt-0.5 block">
+                                Text-only Profile
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleQuickDelete(r.id)}
+                            type="button"
+                            className="text-rose-love hover:bg-rose-love/15 p-1.5 rounded-none border border-transparent hover:border-rose-border transition-colors flex-shrink-0"
                           >
-                            {r.file.split("/").pop()}
-                          </a>
-                        ) : (
-                          <span className="text-[10px] text-rose-subtle font-mono font-medium mt-0.5 block">
-                            Text-only Profile
-                          </span>
-                        )}
-                      </div>
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="border-t border-rose-hl-med pt-3 mt-3 flex justify-between items-center text-xs font-bold text-rose-muted shrink-0">
                       <button
-                        onClick={() => handleQuickDelete(r.id)}
-                        type="button"
-                        className="text-rose-love hover:bg-rose-love/15 p-1.5 rounded-none border border-transparent hover:border-rose-border transition-colors flex-shrink-0"
+                        onClick={() => uploadResumeDialogRef.current?.showModal()}
+                        className="text-rose-pine hover:text-rose-iris transition-colors flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wider"
                       >
-                        <Trash2 size={12} />
+                        <Plus size={13} className="stroke-[3]" /> Add New
+                      </button>
+                      <button
+                        onClick={() => navigate("/resumes")}
+                        className="text-rose-muted hover:text-rose-text transition-colors flex items-center gap-0.5 text-[11px] font-extrabold uppercase tracking-wider"
+                      >
+                        Manage all <ChevronRight size={13} />
                       </button>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {resumes.length > 0 && (
-                <div className="border-t border-rose-hl-med pt-3 mt-3 flex justify-between items-center text-xs font-bold text-rose-muted shrink-0">
-                  <span>{resumes.length} resume profiles</span>
-                  <button
-                    onClick={() => navigate("/resumes")}
-                    className="text-rose-pine hover:text-rose-iris transition-colors flex items-center gap-0.5"
-                  >
-                    Manage all <ChevronRight size={13} />
-                  </button>
-                </div>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
+            </WindowPanel>
           </motion.div>
         </div>
       </div>

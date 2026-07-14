@@ -42,7 +42,8 @@ Choose from these sizes:
 - 11-50: early stage, post-series A, small team
 - 51-200: mid-size growing startup or small enterprise
 - 201-500: medium enterprise, scale-up
-- 500+: large enterprise, corporate, major global brand
+- 501-1000: large scale-up or mid-size corporate
+- 1000+: very large corporate, multinational, major global brand
 
 If you believe the company does not fit this size constraint (e.g., if the company size is requested as 1-10 but the company is a well-known multinational corporate like Google or JPMorgan, or vice-versa), you MUST mark "is_match" as false.
 If you do not know the company's size, default to assuming it matches the requested size unless there is a clear contradiction.
@@ -106,10 +107,17 @@ Format:
                 time.sleep(wait_time)
                 continue
                 
-            raise e
+            if "key" in err_str or "invalid" in err_str or "400" in err_str or "403" in err_str:
+                raise ValueError("Invalid Gemini API Key or project configuration. Please check your settings.")
+            elif "503" in err_str or "unavailable" in err_str:
+                raise ValueError("Gemini API is temporarily experiencing high demand. Please try again.")
+            raise ValueError(f"Gemini API error during job evaluation: {e}")
 
     if last_exc:
-        raise last_exc
+        err_str = str(last_exc).lower()
+        if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
+            raise ValueError("Gemini API quota exceeded or rate limit reached. Please wait a moment or check your billing settings.")
+        raise ValueError(f"Gemini API error during job evaluation: {last_exc}")
     return {}
 
 def generate_search_keyword(api_key: str, resume_text: str, gemini_model: str = "gemini-2.5-flash") -> str:
@@ -136,4 +144,12 @@ def generate_search_keyword(api_key: str, resume_text: str, gemini_model: str = 
         return response.text.strip().strip('"').strip("'")
     except Exception as e:
         logger.error(f"Gemini API error generating keyword: {e}")
-        raise e
+        err_str = str(e).lower()
+        if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
+            raise ValueError("Gemini API quota exceeded or rate limit reached. Please wait a moment or check your billing settings.")
+        elif "503" in err_str or "unavailable" in err_str:
+            raise ValueError("Gemini API is temporarily experiencing high demand. Please try again.")
+        elif "key" in err_str or "invalid" in err_str or "400" in err_str or "403" in err_str:
+            raise ValueError("Invalid Gemini API Key or project configuration. Please check your settings.")
+        raise ValueError(f"Gemini API error generating search keyword: {e}")
+

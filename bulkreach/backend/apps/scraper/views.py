@@ -178,7 +178,23 @@ class ScrapeJobResultsView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        contacts_qs = job.contacts.all().order_by("-id")
+        contacts_qs = job.contacts.all()
+
+        ordering = request.query_params.get("ordering", "").strip()
+        sort_by_posted_date = False
+        reverse_posted_date = False
+        if ordering == "posted_date":
+            sort_by_posted_date = True
+            reverse_posted_date = True  # Oldest first (larger days value first)
+        elif ordering == "-posted_date":
+            sort_by_posted_date = True
+            reverse_posted_date = False  # Newest first (smaller days value first)
+
+        if not sort_by_posted_date:
+            if ordering in ["created_at", "-created_at", "id", "-id", "name", "-name"]:
+                contacts_qs = contacts_qs.order_by(ordering)
+            else:
+                contacts_qs = contacts_qs.order_by("-id")
 
         # Optional search filter
         search = request.query_params.get("search", "").strip()
@@ -208,10 +224,45 @@ class ScrapeJobResultsView(APIView):
         if salary_filter:
             contacts_qs = contacts_qs.filter(salary__icontains=salary_filter)
 
+        if sort_by_posted_date:
+            import re
+            def parse_relative_date_to_days(date_str):
+                if not date_str:
+                    return 999999
+                date_lower = date_str.lower().strip()
+                if any(w in date_lower for w in ["now", "today", "hour", "minute"]):
+                    return 0
+                if "yesterday" in date_lower:
+                    return 1
+                
+                digits = re.findall(r'\d+', date_lower)
+                val = int(digits[0]) if digits else 1
+                
+                if "day" in date_lower:
+                    return val
+                elif "week" in date_lower:
+                    return val * 7
+                elif "month" in date_lower:
+                    return val * 30
+                elif "year" in date_lower:
+                    return val * 365
+                return 999999
+
+            contacts_list = list(contacts_qs)
+            
+            # Separate contacts with posted date and without to keep missing dates at bottom
+            has_date_list = [c for c in contacts_list if c.posted_date]
+            no_date_list = [c for c in contacts_list if not c.posted_date]
+            
+            has_date_list.sort(key=lambda c: parse_relative_date_to_days(c.posted_date), reverse=reverse_posted_date)
+            contacts_list = has_date_list + no_date_list
+        else:
+            contacts_list = contacts_qs
+
         # Pagination
         paginator = StandardResultsPagination()
         paginator.page_size = int(request.query_params.get("page_size", 100))
-        page = paginator.paginate_queryset(contacts_qs, request)
+        page = paginator.paginate_queryset(contacts_list, request)
 
         contacts_serializer = ScrapedContactSerializer(page, many=True)
         return Response({
@@ -450,6 +501,50 @@ class ScrapeJobCancelView(APIView):
         )
 
 
+class ScrapeJobRetryView(APIView):
+    """
+    POST /api/scraper/jobs/:id/retry/
+    Retries a failed or cancelled scrape job.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            job = ScrapeJob.objects.get(pk=pk, user=request.user)
+        except ScrapeJob.DoesNotExist:
+            return Response(
+                {"error": True, "message": "Scrape job not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Clear error and reset status to PENDING
+        job.status = ScrapeJob.Status.PENDING
+        job.error_message = ""
+        job.result_count = 0
+        job.completed_at = None
+        job.started_at = None
+        
+        # Remove any scraped contacts from previous attempt to run cleanly
+        job.contacts.all().delete()
+        
+        job.save()
+
+        # Trigger the celery task
+        from .tasks import run_scrape_job
+        task = run_scrape_job.apply_async(args=[job.id], queue="scraping")
+        job.celery_task_id = task.id
+        job.save(update_fields=["celery_task_id"])
+
+        return Response(
+            {
+                "message": "Scrape job retried successfully.",
+                "job": ScrapeJobSerializer(job).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class ScrapedContactDetailView(APIView):
     """
     PUT /api/scraper/contacts/:id/ - Edit a scraped contact's name or email manually
@@ -648,6 +743,12 @@ class ScrapedContactExtractRecruiterView(APIView):
                         )
                     )
                     result = clean_and_parse_json(response.text)
+                    from apps.accounts.models import log_ai_usage
+                    log_ai_usage(
+                        request.user,
+                        "Recruiter Details Extraction",
+                        model_name=getattr(request.user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
+                    )
                     name_candidate = result.get("recruiter_name")
                     email_candidate = result.get("recruiter_email")
                     
@@ -713,6 +814,12 @@ class ScrapedContactExtractRecruiterView(APIView):
                         )
                      )
                     result = clean_and_parse_json(response.text)
+                    from apps.accounts.models import log_ai_usage
+                    log_ai_usage(
+                        request.user,
+                        "Recruiter Web Search Extraction",
+                        model_name=getattr(request.user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
+                    )
                     name_candidate = result.get("recruiter_name")
                     email_candidate = result.get("recruiter_email")
                     linkedin_candidate = result.get("recruiter_linkedin_url")

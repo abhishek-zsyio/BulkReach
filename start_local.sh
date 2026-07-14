@@ -176,26 +176,36 @@ if [ "$START_CHOICE" == "1" ] || [ "$START_CHOICE" == "2" ] || [ "$START_CHOICE"
     echo -e "${GREEN}4. Starting Frontend React Server (Vite)...${NC}"
     cd "$FRONTEND_DIR"
     if command -v bun &> /dev/null; then
-        echo -e "${BLUE}Using bun to start frontend...${NC}"
-        bun run dev -- --host &
+        echo -e "${BLUE}Using bun to start frontend (with --force)...${NC}"
+        bun run dev -- --host --force &
     else
-        echo -e "${BLUE}Using npm to start frontend...${NC}"
-        npm run dev -- --host &
+        echo -e "${BLUE}Using npm to start frontend (with --force)...${NC}"
+        npm run dev -- --host --force &
     fi
     FRONTEND_PID=$!
 fi
+
+# Detect LAN IP dynamically
+LAN_IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1 || ipconfig getifaddr en2 || hostname -I 2>/dev/null | awk '{print $1}' || echo "")
 
 echo -e "\n========================================================"
 echo -e "🎉 ${GREEN}Services launched successfully!${NC}"
 echo -e "========================================================"
 if [ "$START_CHOICE" == "1" ] || [ "$START_CHOICE" == "2" ] || [ "$START_CHOICE" == "4" ]; then
-    echo -e "   - Frontend Client:  ${BLUE}http://localhost:5173${NC} (or http://localhost:5174)"
+    echo -e "   - Frontend Client (Local):   ${BLUE}http://localhost:5174${NC} (or port 5173)"
+    if [ ! -z "$LAN_IP" ]; then
+        echo -e "   - Frontend Client (Network): ${BLUE}http://${LAN_IP}:5174${NC} (or port 5173)"
+    fi
 fi
 if [ "$START_CHOICE" == "1" ] || [ "$START_CHOICE" == "3" ] || [ "$START_CHOICE" == "4" ]; then
-    echo -e "   - Backend API:      ${BLUE}http://localhost:8000${NC}"
-    echo -e "   - Django Admin:     ${BLUE}http://localhost:8000/admin/${NC}"
+    echo -e "   - Backend API:               ${BLUE}http://localhost:8000${NC}"
+    if [ ! -z "$LAN_IP" ]; then
+        echo -e "   - Backend API (Network):     ${BLUE}http://${LAN_IP}:8000${NC}"
+    fi
+    echo -e "   - Django Admin:              ${BLUE}http://localhost:8000/admin/${NC}"
 fi
 echo -e "========================================================"
+
 echo -e "👉 ${YELLOW}Press Ctrl+C in this terminal window to stop all running services.${NC}"
 echo -e "========================================================\n"
 

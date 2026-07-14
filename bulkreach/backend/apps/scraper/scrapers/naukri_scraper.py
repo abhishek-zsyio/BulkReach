@@ -86,7 +86,7 @@ class NaukriScraper(BaseScraper):
             return f"https://www.naukri.com/{slug_kw}-jobs{loc_part}"
         return f"https://www.naukri.com/{slug_kw}-jobs{loc_part}-{page}"
 
-    def scrape(self, keywords: str, location: str, max_results: int = 50) -> List[Dict]:
+    def scrape(self, keywords: str, location: str, max_results: int = 50, **kwargs) -> List[Dict]:
         """Scrape Naukri job listings and return structured contact data."""
         try:
             from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout

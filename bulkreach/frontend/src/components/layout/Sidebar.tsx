@@ -80,8 +80,8 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
         </div>
         {!isCollapsed && (
           <div className="animate-fade-in flex-1 min-w-0">
-            <span className="font-black text-rose-text text-base tracking-tight uppercase">Bulk<span className="text-rose-pine">Reach</span></span>
-            <p className="text-[9px] text-rose-iris font-black uppercase tracking-widest mt-0.5">Outreach Platform</p>
+            <span className="font-display font-black text-rose-text text-base tracking-tight uppercase">Bulk<span className="text-rose-pine">Reach</span></span>
+            <p className="font-display text-[9px] text-rose-iris font-black uppercase tracking-widest mt-0.5">Outreach Platform</p>
           </div>
         )}
         {/* Mobile close button */}
@@ -96,7 +96,7 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
       {/* Nav */}
       <nav className="flex-1 p-4 space-y-2 mt-3 overflow-y-auto">
         {!isCollapsed && (
-          <p className="text-[10px] font-extrabold text-rose-muted uppercase tracking-widest px-3.5 mb-3.5">
+          <p className="font-display text-[10px] font-extrabold text-rose-muted uppercase tracking-widest px-3.5 mb-3.5">
             Navigation
           </p>
         )}
@@ -211,8 +211,8 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
               <Zap size={18} className="text-white fill-white" />
             </div>
             <div className="flex-1">
-              <span className="font-black text-rose-text text-base tracking-tight uppercase">Bulk<span className="text-rose-pine">Reach</span></span>
-              <p className="text-[9px] text-rose-iris font-black uppercase tracking-widest mt-0.5">Outreach Platform</p>
+              <span className="font-display font-black text-rose-text text-base tracking-tight uppercase">Bulk<span className="text-rose-pine">Reach</span></span>
+              <p className="font-display text-[9px] text-rose-iris font-black uppercase tracking-widest mt-0.5">Outreach Platform</p>
             </div>
             <button onClick={onMobileClose} className="text-rose-muted hover:text-rose-text p-1 transition-colors">
               <X size={18} />
@@ -221,7 +221,7 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
 
           {/* Mobile nav */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            <p className="text-[10px] font-extrabold text-rose-muted uppercase tracking-widest px-3.5 mb-3.5">
+            <p className="font-display text-[10px] font-extrabold text-rose-muted uppercase tracking-widest px-3.5 mb-3.5">
               Navigation
             </p>
             {navItems.map((item) => {

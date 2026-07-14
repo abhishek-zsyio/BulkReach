@@ -51,6 +51,15 @@ class GmailOAuthService:
         # SHA256 returns 32 bytes, which maps to a valid 43-character URL-safe base64 string
         return base64.urlsafe_b64encode(hashlib.sha256(seed.encode()).digest()).decode().rstrip("=")
 
+    def _make_datetime_aware(self, dt):
+        """Convert a timezone-naive datetime to timezone-aware UTC datetime."""
+        if dt is None:
+            return None
+        from django.utils import timezone as django_timezone
+        if django_timezone.is_naive(dt):
+            return django_timezone.make_aware(dt, timezone.utc)
+        return dt
+
     def get_authorization_url(self, user_id: int, state_val: Optional[str] = None) -> str:
         """Generate the Google OAuth2 consent screen URL, encoding state_val (or user_id) as state."""
         flow = self._get_flow()
@@ -89,7 +98,7 @@ class GmailOAuthService:
         # Store tokens (encrypted by django-encrypted-model-fields)
         user.gmail_access_token = credentials.token
         user.gmail_refresh_token = credentials.refresh_token
-        user.gmail_token_expiry = credentials.expiry
+        user.gmail_token_expiry = self._make_datetime_aware(credentials.expiry)
         user.gmail_connected = True
         user.sender_email = sender_email
         if not user.sender_name:
@@ -152,7 +161,7 @@ class GmailOAuthService:
         # Update Google OAuth tokens
         user.gmail_access_token = credentials.token
         user.gmail_refresh_token = credentials.refresh_token
-        user.gmail_token_expiry = credentials.expiry
+        user.gmail_token_expiry = self._make_datetime_aware(credentials.expiry)
         user.gmail_connected = True
         user.sender_email = email
         if not user.sender_name:
@@ -199,7 +208,7 @@ class GmailOAuthService:
                 credentials.refresh(Request())
                 # Persist refreshed token (NEVER log the token value)
                 user.gmail_access_token = credentials.token
-                user.gmail_token_expiry = credentials.expiry
+                user.gmail_token_expiry = self._make_datetime_aware(credentials.expiry)
                 user.save(update_fields=["gmail_access_token", "gmail_token_expiry"])
                 logger.info("Gmail token refreshed for user %s", user.id)
             except Exception as exc:

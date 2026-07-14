@@ -21,6 +21,7 @@ interface SearchModalProps {
     companySize?: string;
   }) => Promise<void>;
   isStartingScrape: boolean;
+  hasGeminiKey?: boolean;
 }
 
 const PLATFORMS = [
@@ -41,6 +42,7 @@ export function SearchModal({
   resumes,
   onLaunch,
   isStartingScrape,
+  hasGeminiKey = false,
 }: SearchModalProps) {
   const [platform, setPlatform] = useState("linkedin");
   const [keywords, setKeywords] = useState("");
@@ -60,10 +62,15 @@ export function SearchModal({
       toast.error("Target Campaign is required.");
       return;
     }
+    if (useAiMatching && !hasGeminiKey) {
+      toast.error("Please configure your Gemini API Key in Settings to use AI Matching.");
+      return;
+    }
     if (!useAiMatching && !keywords.trim()) {
       toast.error("Keywords are required when AI matching is disabled.");
       return;
     }
+
 
     try {
       await onLaunch({
@@ -258,6 +265,11 @@ export function SearchModal({
                       <span className="text-xs font-black uppercase">{useAiMatching ? "On" : "Off"}</span>
                     </button>
                   </div>
+                  {useAiMatching && !hasGeminiKey && (
+                    <p className="text-[10px] font-bold text-rose-love mt-1.5 uppercase tracking-wider">
+                      ⚠️ Gemini key not configured. Add it in Settings to enable AI matching.
+                    </p>
+                  )}
                 </div>
 
                 {/* Advanced filters */}

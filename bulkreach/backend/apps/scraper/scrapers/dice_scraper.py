@@ -15,7 +15,7 @@ class DiceScraper(BaseScraper):
     MIN_DELAY = 1.0
     MAX_DELAY = 2.5
     
-    def scrape(self, keywords: str, location: str, max_results: int = 50) -> List[Dict]:
+    def scrape(self, keywords: str, location: str, max_results: int = 50, **kwargs) -> List[Dict]:
         try:
             from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
         except ImportError:

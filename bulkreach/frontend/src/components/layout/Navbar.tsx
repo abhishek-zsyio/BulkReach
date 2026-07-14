@@ -56,11 +56,11 @@ export function Navbar({ onMobileMenuOpen }: NavbarProps) {
         </button>
 
         <div className="flex flex-col justify-center min-w-0">
-          <span className="text-rose-text text-sm font-extrabold tracking-tight truncate leading-tight">
+          <span className="font-display text-rose-text text-sm font-extrabold tracking-tight truncate leading-tight">
             {pageInfo.label}
           </span>
           {pageInfo.subtitle && (
-            <span className="hidden sm:block text-rose-muted text-[11px] font-semibold tracking-wide mt-0.5 truncate">
+            <span className="font-display hidden sm:block text-rose-muted text-[11px] font-semibold tracking-wide mt-0.5 truncate">
               {pageInfo.subtitle}
             </span>
           )}
@@ -106,7 +106,7 @@ export function Navbar({ onMobileMenuOpen }: NavbarProps) {
           title={`Signed in as ${displayName} — Open Settings`}
         >
           <div className="hidden sm:flex flex-col items-end justify-center">
-            <span className="text-xs text-rose-text font-black tracking-tight truncate max-w-[120px] group-hover/nav:text-rose-pine transition-colors">
+            <span className="font-display text-xs text-rose-text font-black tracking-tight truncate max-w-[120px] group-hover/nav:text-rose-pine transition-colors">
               {displayName}
             </span>
             <span className="text-[9px] text-rose-muted font-extrabold uppercase tracking-widest border border-rose-muted/20 px-1.5 py-0.5 bg-rose-hl-low/40">

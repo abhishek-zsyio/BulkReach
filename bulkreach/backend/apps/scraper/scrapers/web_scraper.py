@@ -14,7 +14,7 @@ class WebScraper(BaseScraper):
     Scrapes DuckDuckGo for ATS job listings (lever.co, greenhouse.io, etc) using ddgs.
     """
 
-    def scrape(self, keywords: str, location: str, max_results: int = 50) -> List[Dict]:
+    def scrape(self, keywords: str, location: str, max_results: int = 50, **kwargs) -> List[Dict]:
         """Scrape Web for ATS job listings and return structured contact data."""
         try:
             from ddgs import DDGS

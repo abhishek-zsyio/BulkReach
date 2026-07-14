@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .models import UserProfile, UserResume
+from .models import UserProfile, UserResume, AIUsageLog, log_ai_usage
 from .serializers import RegisterSerializer, UserProfileSerializer, CustomTokenObtainPairSerializer, UserResumeSerializer
 from .services.gmail_oauth import GmailOAuthService
 
@@ -85,6 +85,43 @@ class MeView(APIView):
                 logger.warning("Failed to revoke Google token during user deletion: %s", exc)
         user.delete()
         return Response({"message": "Account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+
+class AIStatusView(APIView):
+    """GET /api/auth/ai-status/ — returns Gemini API key status and usage info."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from django.utils import timezone
+        
+        user = request.user
+        has_key = bool(user.gemini_api_key)
+        model = user.gemini_model or "gemini-2.5-flash"
+        
+        # Calculate daily usage starting from midnight UTC
+        today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        requests_today = AIUsageLog.objects.filter(user=user, timestamp__gte=today_start).count()
+        
+        # Retrieve recent logs
+        logs = AIUsageLog.objects.filter(user=user)[:5]
+        recent_logs = []
+        for log in logs:
+            recent_logs.append({
+                "id": log.id,
+                "request_type": log.request_type,
+                "model_name": log.model_name,
+                "timestamp": log.timestamp.isoformat(),
+            })
+
+        return Response({
+            "has_key": has_key,
+            "model": model,
+            "requests_today": requests_today,
+            "daily_limit": 1500,
+            "recent_logs": recent_logs,
+        })
+
 
 
 class GmailConnectView(APIView):
@@ -285,6 +322,7 @@ class UserResumeViewSet(viewsets.ModelViewSet):
                             gemini_api_key,
                             model=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
                         )
+                        log_ai_usage(user, "Resume Parsing", model_name=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash")
                     except Exception as ge:
                         logger.warning("Gemini parsing failed, using local fallback: %s", ge)
                 
@@ -334,6 +372,7 @@ class UserResumeViewSet(viewsets.ModelViewSet):
                     gemini_api_key,
                     model=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash"
                 )
+                log_ai_usage(user, "Resume Parsing (Re-parse)", model_name=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash")
             except Exception as ge:
                 logger.warning("Gemini parsing failed during re-parse: %s", ge)
                 err_str = str(ge).lower()
@@ -400,6 +439,7 @@ Ensure the output is clean, valid JSON. Do not wrap it in markdown code blocks l
             )
             
             tailored_data = json.loads(response.text)
+            log_ai_usage(user, "Resume Tailoring", model_name=getattr(user, "gemini_model", "gemini-2.5-flash") or "gemini-2.5-flash")
             return Response({"tailored_data": tailored_data})
             
         except Exception as e:

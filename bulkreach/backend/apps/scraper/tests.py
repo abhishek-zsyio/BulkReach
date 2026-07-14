@@ -267,3 +267,73 @@ class ProfileResearchAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(ProfileResearch.objects.filter(id=self.research.id).exists())
 
+
+class ScrapeJobRetryTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser_retry", password="testpassword_retry")
+        self.client.force_authenticate(user=self.user)
+        self.job = ScrapeJob.objects.create(
+            user=self.user,
+            platform="linkedin",
+            keywords="python developer",
+            location="Remote",
+            status=ScrapeJob.Status.FAILED,
+            error_message="Some error happened"
+        )
+        self.contact = ScrapedContact.objects.create(
+            job=self.job,
+            name="John Doe",
+            email="john@example.com"
+        )
+
+    @patch("apps.scraper.tasks.run_scrape_job.apply_async")
+    def test_retry_scrape_job(self, mock_apply_async):
+        mock_task = MagicMock()
+        mock_task.id = "mock-task-id-123"
+        mock_apply_async.return_value = mock_task
+
+        url = reverse("scrape-job-retry", kwargs={"pk": self.job.id})
+        response = self.client.post(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify job is updated in the database
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, ScrapeJob.Status.PENDING)
+        self.assertEqual(self.job.error_message, "")
+        self.assertEqual(self.job.celery_task_id, "mock-task-id-123")
+        
+        # Verify previous contacts are deleted
+        self.assertEqual(ScrapedContact.objects.filter(job=self.job).count(), 0)
+        
+        mock_apply_async.assert_called_once_with(args=[self.job.id], queue="scraping")
+
+
+from django.test import TestCase
+from apps.scraper.tasks import _matches_freshness
+
+class FreshnessFilterTests(TestCase):
+    def test_matches_freshness_normalization(self):
+        # 24h checks
+        self.assertTrue(_matches_freshness("2 hours ago", "past_24h"))
+        self.assertTrue(_matches_freshness("1 day ago", "past_24h"))
+        self.assertTrue(_matches_freshness("yesterday", "past_24h"))
+        self.assertFalse(_matches_freshness("3 days ago", "past_24h"))
+        
+        # week checks
+        self.assertTrue(_matches_freshness("5 days ago", "past_week"))
+        self.assertTrue(_matches_freshness("1 week ago", "past_week"))
+        self.assertFalse(_matches_freshness("2 weeks ago", "past_week"))
+        self.assertFalse(_matches_freshness("1 month ago", "past_week"))
+        
+        # month checks
+        self.assertTrue(_matches_freshness("3 weeks ago", "past_month"))
+        self.assertTrue(_matches_freshness("1 month ago", "past_month"))
+        self.assertFalse(_matches_freshness("2 months ago", "past_month"))
+        
+        # any time
+        self.assertTrue(_matches_freshness("2 months ago", "any"))
+        self.assertTrue(_matches_freshness("2 months ago", ""))
+
+
+
