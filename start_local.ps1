@@ -64,7 +64,7 @@ if ($choice -eq "1" -or $choice -eq "3") {
 if ($choice -eq "1" -or $choice -eq "2") {
     Write-Host "4. Starting Frontend React Server (Vite)..." -ForegroundColor Green
     $hasBun = Get-Command bun -ErrorAction SilentlyContinue
-    $frontCmd = if ($hasBun) { "bun run dev -- --host" } else { "npm run dev -- --host" }
+    $frontCmd = if ($hasBun) { "bun run dev -- --host --force" } else { "npm run dev -- --host --force" }
     $cmdName = if ($hasBun) { "Bun" } else { "NPM" }
     
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "Write-Host '========================================' -ForegroundColor Cyan; Write-Host '     Vite Frontend Client ($cmdName)    ' -ForegroundColor Cyan; Write-Host '========================================' -ForegroundColor Cyan; Set-Location '$PSScriptRoot\bulkreach\frontend'; $frontCmd"
