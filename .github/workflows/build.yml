@@ -44,6 +44,7 @@ jobs:
           npm run electron:build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload macOS Artifacts
         uses: actions/upload-artifact@v4
@@ -90,6 +91,7 @@ jobs:
           npm run electron:build:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
