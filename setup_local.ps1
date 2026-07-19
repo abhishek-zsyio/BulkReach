@@ -1,3 +1,4 @@
+
 # setup_local.ps1
 # BulkReach - Local Setup Assistant (Windows)
 
@@ -97,6 +98,33 @@ if (-not (Test-Path $backendEnvFile)) {
     }
 } else {
     Write-Host "[OK] Backend .env file found." -ForegroundColor Green
+    
+    # Check for missing decoupled keys
+    $envContent = Get-Content -Path $backendEnvFile -Raw
+    $keysUpdated = $false
+    
+    if ($envContent -notmatch "(?m)^SECRET_KEY=") {
+        $newKey = "django-insecure-" + [Guid]::NewGuid().ToString()
+        $envContent += "`nSECRET_KEY='$newKey'"
+        $keysUpdated = $true
+        Write-Host "   [ OK ] Appended missing SECRET_KEY to backend/.env." -ForegroundColor Green
+    }
+    if ($envContent -notmatch "(?m)^FIELD_ENCRYPTION_KEY=") {
+        $fallbackFernet = "UoKCOAG28tPVRLBrLoqFqpNWZsBI7PBwTwKZ3PFZ0Xw="
+        $envContent += "`nFIELD_ENCRYPTION_KEY='$fallbackFernet'"
+        $keysUpdated = $true
+        Write-Host "   [ OK ] Appended missing FIELD_ENCRYPTION_KEY to backend/.env." -ForegroundColor Green
+    }
+    if ($envContent -notmatch "(?m)^JWT_SECRET_KEY=") {
+        $newJwt = [Guid]::NewGuid().ToString() + [Guid]::NewGuid().ToString()
+        $envContent += "`nJWT_SECRET_KEY='$newJwt'"
+        $keysUpdated = $true
+        Write-Host "   [ OK ] Appended missing JWT_SECRET_KEY to backend/.env." -ForegroundColor Green
+    }
+    
+    if ($keysUpdated) {
+        $envContent | Out-File -FilePath $backendEnvFile -Encoding utf8 -NoNewline
+    }
 }
 
 if (-not (Test-Path $frontendEnvFile)) {
@@ -178,31 +206,67 @@ if ($setupChoice -eq "1") {
     
     # Check Redis
     Write-Host "Checking local services status..." -ForegroundColor Yellow
+    
+    # Check Redis
+    $redisRunning = $false
     $redisSocket = New-Object System.Net.Sockets.TcpClient
     try {
         $redisSocket.Connect("127.0.0.1", 6379)
         if ($redisSocket.Connected) {
-            Write-Host "   [ OK ] Redis is running on port 6379." -ForegroundColor Green
+            $redisRunning = $true
             $redisSocket.Close()
         }
-    } catch {
+    } catch {}
+
+    if ($redisRunning) {
+        Write-Host "   [ OK ] Redis is running on port 6379." -ForegroundColor Green
+    } else {
         Write-Host "   [ WARN ] Redis is NOT running on port 6379." -ForegroundColor Yellow
-        Write-Host "            (Please install and start Redis for Windows before running start_local.ps1)" -ForegroundColor Yellow
+        $installRedis = Read-Host "Would you like to install and start Redis via Winget? (y/n) [default y]"
+        if ($installRedis -notlike "n*" -and $installRedis -notlike "N*") {
+            if (Get-Command winget -ErrorAction SilentlyContinue) {
+                Write-Host "Installing Redis via Winget..." -ForegroundColor Blue
+                Start-Process winget -ArgumentList "install tporadowski.redis --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+                Start-Service -Name "redis" -ErrorAction SilentlyContinue
+                Start-Process "net" -ArgumentList "start redis" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+            } else {
+                Write-Host "Winget package manager not found. Please install Redis manually." -ForegroundColor Red
+            }
+        }
     }
     
     # Check Postgres
+    $postgresRunning = $false
     $postgresSocket = New-Object System.Net.Sockets.TcpClient
     try {
         $postgresSocket.Connect("127.0.0.1", 5432)
         if ($postgresSocket.Connected) {
-            Write-Host "   [ OK ] PostgreSQL is running on port 5432." -ForegroundColor Green
+            $postgresRunning = $true
             $postgresSocket.Close()
-            Write-Host "            Note: Make sure a PostgreSQL role and database named 'bulkreach' exist." -ForegroundColor Yellow
-            Write-Host "            If not, run: CREATE DATABASE bulkreach; CREATE USER bulkreach WITH PASSWORD 'password'; GRANT ALL PRIVILEGES ON DATABASE bulkreach TO bulkreach;" -ForegroundColor Yellow
         }
-    } catch {
+    } catch {}
+
+    if ($postgresRunning) {
+        Write-Host "   [ OK ] PostgreSQL is running on port 5432." -ForegroundColor Green
+        Write-Host "            Note: Make sure a PostgreSQL role and database named 'bulkreach' exist." -ForegroundColor Yellow
+        Write-Host "            If not, run: CREATE DATABASE bulkreach; CREATE USER bulkreach WITH PASSWORD 'password'; GRANT ALL PRIVILEGES ON DATABASE bulkreach TO bulkreach;" -ForegroundColor Yellow
+    } else {
         Write-Host "   [ WARN ] PostgreSQL is NOT running on port 5432." -ForegroundColor Yellow
-        Write-Host "            (Please install and start PostgreSQL for Windows before running start_local.ps1)" -ForegroundColor Yellow
+        $installPg = Read-Host "Would you like to install PostgreSQL via Winget? (y/n) [default y]"
+        if ($installPg -notlike "n*" -and $installPg -notlike "N*") {
+            if (Get-Command winget -ErrorAction SilentlyContinue) {
+                Write-Host "Installing PostgreSQL via Winget (this may take a few minutes)..." -ForegroundColor Blue
+                Start-Process winget -ArgumentList "install PostgreSQL.PostgreSQL --silent --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+                Start-Service -Name "postgresql*" -ErrorAction SilentlyContinue
+                Start-Process "net" -ArgumentList "start postgresql-x64-16" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+                Start-Process "net" -ArgumentList "start postgresql-x64-15" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+                
+                Write-Host "`nPostgreSQL installation finished." -ForegroundColor Green
+                Write-Host "Important: Make sure to start the PostgreSQL service and create a database named 'bulkreach' with user 'bulkreach' and password 'password'." -ForegroundColor Yellow
+            } else {
+                Write-Host "Winget package manager not found. Please install PostgreSQL manually." -ForegroundColor Red
+            }
+        }
     }
     
     # Setup Python environment
@@ -245,7 +309,7 @@ if ($setupChoice -eq "1") {
     Set-Location $frontendDir
     
     Write-Host "Installing npm packages..." -ForegroundColor Blue
-    $npmInstall = Start-Process npm -ArgumentList "install" -Wait -NoNewWindow -PassThru
+    $npmInstall = Start-Process npm -ArgumentList "install", "--legacy-peer-deps" -Wait -NoNewWindow -PassThru
     if ($npmInstall.ExitCode -ne 0) {
         Write-Host "[FAIL] npm install failed. Please check your Node/NPM version." -ForegroundColor Red
         Exit

@@ -112,6 +112,24 @@ if [ ! -f "$BACKEND_DIR/.env" ]; then
     fi
 else
     echo -e "${GREEN}[OK] Backend .env file found.${NC}"
+    KEYS_UPDATED=false
+    if ! grep -q "^SECRET_KEY=" "$BACKEND_DIR/.env"; then
+        RANDOM_KEY=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 50)
+        echo -e "\nSECRET_KEY='django-insecure-$RANDOM_KEY'" >> "$BACKEND_DIR/.env"
+        KEYS_UPDATED=true
+        echo -e "${GREEN}   [OK] Appended missing SECRET_KEY to backend/.env.${NC}"
+    fi
+    if ! grep -q "^FIELD_ENCRYPTION_KEY=" "$BACKEND_DIR/.env"; then
+        echo -e "\nFIELD_ENCRYPTION_KEY='UoKCOAG28tPVRLBrLoqFqpNWZsBI7PBwTwKZ3PFZ0Xw='" >> "$BACKEND_DIR/.env"
+        KEYS_UPDATED=true
+        echo -e "${GREEN}   [OK] Appended missing FIELD_ENCRYPTION_KEY to backend/.env.${NC}"
+    fi
+    if ! grep -q "^JWT_SECRET_KEY=" "$BACKEND_DIR/.env"; then
+        RANDOM_JWT=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 50)
+        echo -e "\nJWT_SECRET_KEY='$RANDOM_JWT'" >> "$BACKEND_DIR/.env"
+        KEYS_UPDATED=true
+        echo -e "${GREEN}   [OK] Appended missing JWT_SECRET_KEY to backend/.env.${NC}"
+    fi
 fi
 
 if [ ! -f "$FRONTEND_DIR/.env" ]; then
@@ -284,8 +302,8 @@ else
     # Setup Frontend React app
     echo -e "\n${YELLOW}[Step 4/4] Setting up Frontend React Application...${NC}"
     cd "$FRONTEND_DIR"
-    echo -e "${BLUE}Installing npm packages...${NC}"
-    if ! npm install; then
+    echo -e "${BLUE}Installing npm packages (with --legacy-peer-deps)...${NC}"
+    if ! npm install --legacy-peer-deps; then
         echo -e "${RED}[FAIL] npm install failed. Please verify your Node version and network connection.${NC}"
         exit 1
     fi
