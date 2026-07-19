@@ -67,9 +67,9 @@ class ScraperHistoryClearTests(APITestCase):
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # Check that all jobs and contacts are deleted for this user
+        # Check that all jobs and contacts are deleted for this user only
         self.assertEqual(ScrapeJob.objects.filter(user=self.user).count(), 0)
-        self.assertEqual(ScrapedContact.objects.count(), 0)
+        self.assertEqual(ScrapedContact.objects.filter(job__user=self.user).count(), 0)
 
 from unittest.mock import patch, MagicMock
 
@@ -334,6 +334,54 @@ class FreshnessFilterTests(TestCase):
         # any time
         self.assertTrue(_matches_freshness("2 months ago", "any"))
         self.assertTrue(_matches_freshness("2 months ago", ""))
+
+
+from apps.scraper.scrapers.base_scraper import BaseScraper
+
+class DummyScraper(BaseScraper):
+    def scrape(self, keywords: str, location: str, max_results: int, **kwargs):
+        return []
+
+class ScrapedContactDeduplicationTests(TestCase):
+    def test_deduplication_by_url_and_title_company(self):
+        existing_urls = {"https://example.com/job-already-scraped"}
+        existing_titles_companies = {("google", "software engineer")}
+        
+        scraper = DummyScraper(
+            existing_urls=existing_urls,
+            existing_titles_companies=existing_titles_companies
+        )
+        
+        candidates = [
+            {
+                "job_title": "Frontend Engineer",
+                "company": "Google",
+                "source_url": "https://example.com/some-new-job"
+            },
+            {
+                "job_title": "Software Engineer",
+                "company": "Google",
+                "source_url": "https://example.com/job-already-scraped" # Duplicate by URL
+            },
+            {
+                "job_title": "Software Engineer", # Duplicate by title/company
+                "company": "Google",
+                "source_url": "https://example.com/another-new-job"
+            },
+            {
+                "job_title": "Product Manager",
+                "company": "Google",
+                "source_url": "https://example.com/pm-job" # New job at same company
+            }
+        ]
+        
+        resolved = scraper._resolve_contacts_concurrently(candidates)
+        
+        # We expect only "Frontend Engineer" (new job) and "Product Manager" to remain
+        self.assertEqual(len(resolved), 2)
+        self.assertEqual(resolved[0]["source_url"], "https://example.com/some-new-job")
+        self.assertEqual(resolved[1]["source_url"], "https://example.com/pm-job")
+
 
 
 

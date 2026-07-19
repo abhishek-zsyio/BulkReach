@@ -65,7 +65,7 @@ class UserProfile(AbstractUser):
         help_text=(
             "Gemini model used for AI tasks. Current options: "
             "gemini-2.5-flash (recommended), gemini-2.5-pro, "
-            "gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro."
+            "gemini-2.0-flash."
         ),
     )
 

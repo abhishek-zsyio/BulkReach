@@ -1,0 +1,57 @@
+{
+  "appId": "com.bulkreach.app",
+  "productName": "TalentStream",
+  "directories": {
+    "output": "dist-electron"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "../backend/dist/desktop_entry",
+      "to": "desktop_entry",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ],
+  "mac": {
+    "category": "public.app-category.developer-tools",
+    "target": ["dmg"],
+    "identity": null,
+    "icon": "build/icon.icns"
+  },
+  "dmg": {
+    "title": "Install TalentStream App",
+    "background": "build/background.tiff",
+    "iconSize": 100,
+    "contents": [
+      {
+        "x": 180,
+        "y": 170,
+        "type": "file"
+      },
+      {
+        "x": 480,
+        "y": 170,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ],
+    "window": {
+      "width": 660,
+      "height": 400
+    }
+  },
+  "win": {
+    "target": ["nsis"],
+    "icon": "build/icon.ico"
+  },
+  "linux": {
+    "target": ["AppImage"],
+    "icon": "build/icon.png"
+  }
+}

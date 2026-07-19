@@ -29,6 +29,8 @@ class WebScraper(BaseScraper):
         
         results: List[Dict] = []
         seen_urls = set()
+        seen_titles_companies = set()
+
         
         try:
             logger.info("WebScraper searching DDG (via api) for: %s", query)
@@ -45,6 +47,11 @@ class WebScraper(BaseScraper):
                         link = r.get("href", "")
                         
                         if not title or not link or link in seen_urls:
+                            continue
+                            
+                        # Skip already scraped links
+                        url_clean = link.strip().lower()
+                        if url_clean in getattr(self, "existing_urls", set()):
                             continue
                             
                         company = "Unknown"
@@ -65,12 +72,19 @@ class WebScraper(BaseScraper):
                             if len(parts) > 1:
                                 company = parts[1].split("/")[0].replace("-", " ").title()
                         
+                        comp_val = company.strip().lower()
+                        title_val = title.strip().lower()
+                        if comp_val and title_val and ((comp_val, title_val) in getattr(self, "existing_titles_companies", set()) or (comp_val, title_val) in seen_titles_companies):
+                            continue
+
                         results.append({
                             "job_title": title,
                             "company": company,
                             "source_url": link,
                         })
                         seen_urls.add(link)
+                        if comp_val and title_val:
+                            seen_titles_companies.add((comp_val, title_val))
                             
         except Exception as exc:
             logger.error("WebScraper request failed: %s", exc)

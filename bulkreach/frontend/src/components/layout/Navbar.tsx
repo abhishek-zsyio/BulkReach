@@ -23,7 +23,7 @@ function getPageInfo(pathname: string) {
   for (const [path, info] of Object.entries(PAGE_TITLES)) {
     if (pathname.startsWith(path + "/")) return info;
   }
-  return { label: "BulkReach", subtitle: "Outreach Platform" };
+  return { label: "TalentStream", subtitle: "Outreach Platform" };
 }
 
 interface NavbarProps {

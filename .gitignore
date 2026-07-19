@@ -52,3 +52,15 @@ Thumbs.db
 .gemini/
 .agents/
 .system_generated/
+
+# Desktop Build Outputs
+bulkreach/frontend/dist-electron/
+bulkreach/frontend/dist/
+bulkreach/backend/dist/
+bulkreach/backend/build/
+bulkreach/frontend/src-tauri/binaries/
+bulkreach/frontend/src-tauri/resources/desktop_entry/
+bulkreach/frontend/src-tauri/target/
+*.dmg
+*.exe
+*.blockmap

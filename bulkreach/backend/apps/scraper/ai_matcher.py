@@ -4,8 +4,21 @@ import time
 from typing import List, Dict, Tuple
 from google import genai
 from google.genai import types
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+class VariableEntry(BaseModel):
+    name: str = Field(description="The name of the campaign variable, e.g. recipient_first_name, company_custom_fact")
+    value: str = Field(description="The extracted or generated value for this variable")
+
+class JobEvaluation(BaseModel):
+    job_id: str = Field(description="The index/ID of the job card evaluated, matching the job ID from the list, e.g. '0', '1'")
+    is_match: bool = Field(description="True if the job is a reasonable match for the candidate based on their resume and constraints")
+    variables: list[VariableEntry] = Field(description="Extracted variables for the outreach email")
+
+class BatchEvaluationResult(BaseModel):
+    evaluations: list[JobEvaluation]
 
 def evaluate_jobs_batch(
     api_key: str,
@@ -46,7 +59,7 @@ Choose from these sizes:
 - 1000+: very large corporate, multinational, major global brand
 
 If you believe the company does not fit this size constraint (e.g., if the company size is requested as 1-10 but the company is a well-known multinational corporate like Google or JPMorgan, or vice-versa), you MUST mark "is_match" as false.
-If you do not know the company's size, default to assuming it matches the requested size unless there is a clear contradiction.
+If you do not know the company's size, default to assuming it matches the requested size unless there is a contradiction.
 """
 
     prompt = f"""
@@ -65,19 +78,6 @@ For each job ID, determine if the job is a reasonable match for the candidate ba
 
 Task 2: Extract Variables
 If it is a match, extract or generate the following variables for an outreach email: {', '.join(campaign_variables)}
-
-Respond ONLY with a valid JSON object where the keys are the job IDs (as strings) and values are the evaluation results.
-Format:
-{{
-    "0": {{
-        "is_match": true,
-        "variables": {{ "var_name": "value" }}
-    }},
-    "1": {{
-        "is_match": false,
-        "variables": {{}}
-    }}
-}}
 """
 
     max_retries = 3
@@ -91,10 +91,21 @@ Format:
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
+                    response_schema=BatchEvaluationResult,
                 )
             )
             
-            result = json.loads(response.text)
+            parsed = json.loads(response.text)
+            result = {}
+            for item in parsed.get("evaluations", []):
+                # Convert the variables list of entries back to a flat dictionary
+                var_dict = {}
+                for v in item.get("variables", []):
+                    var_dict[v.get("name")] = v.get("value", "")
+                result[item.get("job_id")] = {
+                    "is_match": item.get("is_match", False),
+                    "variables": var_dict
+                }
             return result
 
         except Exception as e:

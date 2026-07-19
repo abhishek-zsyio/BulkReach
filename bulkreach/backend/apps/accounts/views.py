@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
 from .models import UserProfile, UserResume, AIUsageLog, log_ai_usage
 from .serializers import RegisterSerializer, UserProfileSerializer, CustomTokenObtainPairSerializer, UserResumeSerializer
@@ -131,8 +132,13 @@ class GmailConnectView(APIView):
 
     def get(self, request):
         redirect_to = request.query_params.get("redirect_to", "dashboard")
+        frontend_origin = request.query_params.get("origin", settings.FRONTEND_URL)
+        
+        import base64
+        encoded_origin = base64.urlsafe_b64encode(frontend_origin.encode()).decode().rstrip("=")
+        
         oauth_service = GmailOAuthService()
-        state_str = f"{request.user.id}:{redirect_to}"
+        state_str = f"{request.user.id}:{redirect_to}:{encoded_origin}"
         auth_url = oauth_service.get_authorization_url(user_id=request.user.id, state_val=state_str)
         return Response({"auth_url": auth_url})
 
@@ -179,6 +185,8 @@ class GmailConnectConfirmView(APIView):
             )
 
 
+from django.http import HttpResponse
+
 class GmailCallbackView(APIView):
     """GET /api/auth/gmail/callback/ — handle OAuth2 callback for both login and connect flows."""
 
@@ -189,36 +197,64 @@ class GmailCallbackView(APIView):
         state = request.query_params.get("state")
 
         if not code:
-            return redirect(f"{settings.FRONTEND_URL}/dashboard?gmail_connected=false&error=missing_code")
+            err_url = f"{settings.FRONTEND_URL.rstrip('/')}/google-callback?error=missing_code"
+            return redirect(err_url)
 
         oauth_service = GmailOAuthService()
         try:
             if state and state.startswith("login_"):
                 # Handle Google Login / Register
-                user, tokens = oauth_service.login_or_register_via_google(code=code, state=state)
-                # Redirect to frontend callback route with JWT tokens
-                return redirect(
-                    f"{settings.FRONTEND_URL}/google-callback?access={tokens['access']}&refresh={tokens['refresh']}"
-                )
+                # Extract origin if present
+                actual_state = state
+                frontend_url = settings.FRONTEND_URL
+                if ":" in state:
+                    actual_state, encoded_origin = state.split(":", 1)
+                    try:
+                        import base64
+                        padded = encoded_origin + "=" * (4 - len(encoded_origin) % 4)
+                        frontend_url = base64.urlsafe_b64decode(padded.encode()).decode()
+                    except Exception:
+                        logger.warning("Failed to decode origin from state: %s", encoded_origin)
+
+                user, tokens = oauth_service.login_or_register_via_google(code=code, state=actual_state)
+                # Store the tokens directly in the cache for desktop sync!
+                DESKTOP_LOGIN_CACHE[actual_state] = {"access": tokens['access'], "refresh": tokens['refresh']}
+                
+                frontend_cb_url = f"{frontend_url.rstrip('/')}/google-callback?access={tokens['access']}&refresh={tokens['refresh']}&state={actual_state}"
+                return redirect(frontend_cb_url)
             else:
-                # Redirect to frontend dashboard / onboarding / settings with parameters for secure POST exchange
-                redirect_page = "dashboard"
+                # Handle Connect Gmail Flow directly on the backend
                 user_id_str = state
+                redirect_to = "dashboard"
+                frontend_url = settings.FRONTEND_URL
+                
                 if state and ":" in state:
-                    user_id_str, redirect_page = state.split(":", 1)
+                    parts = state.split(":")
+                    user_id_str = parts[0]
+                    if len(parts) > 1:
+                        redirect_to = parts[1]
+                    if len(parts) > 2:
+                        try:
+                            import base64
+                            encoded_origin = parts[2]
+                            padded = encoded_origin + "=" * (4 - len(encoded_origin) % 4)
+                            frontend_url = base64.urlsafe_b64decode(padded.encode()).decode()
+                        except Exception:
+                            logger.warning("Failed to decode origin from connect state: %s", parts[2])
 
                 try:
-                    user_id = int(user_id_str)
-                    user = UserProfile.objects.get(pk=user_id)
-                    if not user.is_onboarded:
-                        redirect_page = "onboarding"
-                except Exception:
-                    pass
+                    # Exchange the code for tokens and save them directly in the DB
+                    oauth_service.exchange_code_for_tokens(code=code, state=user_id_str)
+                except Exception as exc:
+                    logger.exception("Failed to connect Gmail on backend callback: %s", exc)
+                    raise exc
 
-                return redirect(f"{settings.FRONTEND_URL}/{redirect_page}?gmail_code={code}&gmail_state={state}")
+                frontend_cb_url = f"{frontend_url.rstrip('/')}/google-callback?gmail_connected=success&state={user_id_str}:{redirect_to}"
+                return redirect(frontend_cb_url)
         except Exception as exc:
             logger.exception("Gmail OAuth callback error: %s", exc)
-            return redirect(f"{settings.FRONTEND_URL}/dashboard?gmail_connected=false&error=oauth_error")
+            err_url = f"{settings.FRONTEND_URL.rstrip('/')}/google-callback?error=auth_failed"
+            return redirect(err_url)
 
 
 class GmailDisconnectView(APIView):
@@ -258,6 +294,8 @@ class GoogleLoginUrlView(APIView):
         import hashlib
         oauth_service = GmailOAuthService()
         
+        frontend_origin = request.query_params.get("origin", settings.FRONTEND_URL)
+        
         # Generate a random state string for PKCE determinism
         random_state = uuid.uuid4().hex
         
@@ -266,13 +304,74 @@ class GoogleLoginUrlView(APIView):
         seed = f"login-{random_state}-{settings.SECRET_KEY}"
         flow.code_verifier = base64.urlsafe_b64encode(hashlib.sha256(seed.encode()).digest()).decode().rstrip("=")
         
+        encoded_origin = base64.urlsafe_b64encode(frontend_origin.encode()).decode().rstrip("=")
+        
         auth_url, _ = flow.authorization_url(
             access_type="offline",
             include_granted_scopes="true",
             prompt="consent",
-            state=f"login_{random_state}",
+            state=f"login_{random_state}:{encoded_origin}",
         )
         return Response({"auth_url": auth_url})
+
+
+# Temporary in-memory cache for syncing desktop login tokens
+DESKTOP_LOGIN_CACHE = {}
+
+class DesktopLoginStoreView(APIView):
+    """POST /api/auth/desktop-login/ — temporarily store access/refresh tokens for desktop sync."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        state = request.data.get("state")
+        access = request.data.get("access")
+        refresh = request.data.get("refresh")
+        if state:
+            if ":" in state:
+                state = state.split(":", 1)[0]
+            if access and refresh:
+                DESKTOP_LOGIN_CACHE[state] = {"access": access, "refresh": refresh}
+                return Response({"status": "stored"})
+        return Response({"error": "invalid_data"}, status=400)
+
+
+class DesktopLoginStatusView(APIView):
+    """GET /api/auth/desktop-login/status/ — poll login tokens for a specific state."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        state = request.query_params.get("state")
+        if state:
+            if ":" in state:
+                state = state.split(":", 1)[0]
+            if state in DESKTOP_LOGIN_CACHE:
+                tokens = DESKTOP_LOGIN_CACHE.pop(state)
+                return Response(tokens)
+        return Response({"status": "pending"})
+
+
+class SafeTokenRefreshView(TokenRefreshView):
+    """
+    POST /api/auth/token/refresh/ — wraps simplejwt's TokenRefreshView.
+
+    If the refresh token references a user that no longer exists in the DB
+    (e.g. after a DB reset), simplejwt raises UserProfile.DoesNotExist which
+    propagates as a 500.  We catch it here and return a clean 401 so the
+    frontend can redirect to login gracefully.
+    """
+
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except Exception as exc:
+            # Catch stale-token / deleted-user errors and surface them as 401
+            exc_name = type(exc).__name__
+            if "DoesNotExist" in exc_name or "UserProfile" in str(exc):
+                logger.warning(
+                    "Token refresh failed — user referenced by token no longer exists: %s", exc
+                )
+                raise InvalidToken({"detail": "User account not found. Please log in again."})
+            raise
 
 
 class LogoutView(APIView):

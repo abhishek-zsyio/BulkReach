@@ -533,6 +533,33 @@
     scrollbar-width: thin;
     scrollbar-color: var(--color-foam) var(--color-hl-low);
   }
+
+  /* ─── Custom Scrollbar (alias) ─── */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-hl-med) transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--color-hl-med);
+    border-radius: 0;
+  }
+
+  /* ─── Brand Gradient Background ─── */
+  .bg-gradient-brand {
+    background: linear-gradient(135deg, var(--color-pine) 0%, var(--color-iris) 100%);
+  }
+
+  /* ─── Slow Pulse Animation ─── */
+  .animate-pulse-slow {
+    animation: pulseSlow 2.4s ease-in-out infinite;
+  }
 }
 
 /* ─── Keyframes ─── */
@@ -559,6 +586,11 @@
 @keyframes borderPulse {
   0%, 100% { border-color: var(--color-iris); box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-iris) 0%, transparent); }
   50% { border-color: color-mix(in srgb, var(--color-iris) 60%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-iris) 15%, transparent); }
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
 /* ─── TipTap Editor ─── */
@@ -647,3 +679,13 @@
   fill: var(--color-hl-low) !important;
   opacity: 0.3 !important;
 }
+
+/* ─── Electron Custom Titlebar Drag Utilities ─── */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+

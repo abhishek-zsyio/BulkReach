@@ -64,7 +64,7 @@ function AuthGuard({ children, onboardingRoute = false }: AuthGuardProps) {
   if (!user) {
     return (
       <PageLoader
-        message={onboardingRoute ? "Loading Setup Wizard..." : "Loading BulkReach..."}
+        message={onboardingRoute ? "Loading Setup Wizard..." : "Loading TalentStream..."}
       />
     );
   }
@@ -88,44 +88,48 @@ function AuthGuard({ children, onboardingRoute = false }: AuthGuardProps) {
 export function AppRouter() {
   return (
     <Suspense fallback={<PageLoader />}>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/google-callback" element={<GoogleCallback />} />
+      <div className="flex flex-col h-screen overflow-hidden bg-rose-base relative">
+        <div className="flex-1 overflow-y-auto relative flex flex-col">
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/google-callback" element={<GoogleCallback />} />
 
-        <Route
-          path="/onboarding"
-          element={
-            <AuthGuard onboardingRoute>
-              <Onboarding />
-            </AuthGuard>
-          }
-        />
+            <Route
+              path="/onboarding"
+              element={
+                <AuthGuard onboardingRoute>
+                  <Onboarding />
+                </AuthGuard>
+              }
+            />
 
-        <Route
-          element={
-            <AuthGuard>
-              <AppLayout />
-            </AuthGuard>
-          }
-        >
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="campaigns" element={<CampaignList />} />
-          <Route path="campaigns/new" element={<CampaignCreate />} />
-          <Route path="campaigns/:id" element={<CampaignDetail />} />
-          <Route path="campaigns/:id/logs" element={<SendLogs />} />
-          <Route path="templates" element={<TemplateList />} />
-          <Route path="templates/:id/edit" element={<TemplateEditor />} />
-          <Route path="resumes" element={<ResumeList />} />
-          <Route path="scraper" element={<ScraperDashboard />} />
-          <Route path="company-research" element={<CompanyResearch />} />
-          <Route path="profile-research" element={<ProfileResearch />} />
-          <Route path="tracker" element={<Tracker />} />
-          <Route path="settings" element={<SettingsPage />} />
-        </Route>
+            <Route
+              element={
+                <AuthGuard>
+                  <AppLayout />
+                </AuthGuard>
+              }
+            >
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="campaigns" element={<CampaignList />} />
+              <Route path="campaigns/new" element={<CampaignCreate />} />
+              <Route path="campaigns/:id" element={<CampaignDetail />} />
+              <Route path="campaigns/:id/logs" element={<SendLogs />} />
+              <Route path="templates" element={<TemplateList />} />
+              <Route path="templates/:id/edit" element={<TemplateEditor />} />
+              <Route path="resumes" element={<ResumeList />} />
+              <Route path="scraper" element={<ScraperDashboard />} />
+              <Route path="company-research" element={<CompanyResearch />} />
+              <Route path="profile-research" element={<ProfileResearch />} />
+              <Route path="tracker" element={<Tracker />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </div>
     </Suspense>
   );
 }

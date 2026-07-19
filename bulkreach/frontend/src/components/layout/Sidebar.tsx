@@ -45,7 +45,7 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
   // Close mobile drawer on navigation
   useEffect(() => {
     onMobileClose();
-  }, [location.pathname]);
+  }, [location.pathname, onMobileClose]);
 
   const getIconAnimation = (label: string) => {
     switch (label) {
@@ -53,9 +53,6 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
       case "Campaigns":       return "group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:scale-110";
       case "Templates":       return "group-hover:scale-110 group-hover:-rotate-3";
       case "Resumes":         return "group-hover:rotate-6 group-hover:scale-110";
-      case "Job Scraper":     return "group-hover:scale-110 group-hover:rotate-12";
-      case "Company Research":return "group-hover:scale-110 group-hover:-rotate-6";
-      case "Profile Research":return "group-hover:scale-110 group-hover:rotate-6";
       case "Research Hub":    return "group-hover:scale-110 group-hover:rotate-6";
       case "Tracker":         return "group-hover:scale-110 group-hover:rotate-6";
       case "Settings":        return "group-hover:rotate-45 group-hover:scale-110";
@@ -80,7 +77,7 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
         </div>
         {!isCollapsed && (
           <div className="animate-fade-in flex-1 min-w-0">
-            <span className="font-display font-black text-rose-text text-base tracking-tight uppercase">Bulk<span className="text-rose-pine">Reach</span></span>
+            <span className="font-display font-black text-rose-text text-base tracking-tight uppercase">Talent<span className="text-rose-pine">Stream</span></span>
             <p className="font-display text-[9px] text-rose-iris font-black uppercase tracking-widest mt-0.5">Outreach Platform</p>
           </div>
         )}
@@ -211,7 +208,7 @@ export function Sidebar({ isCollapsed, isMobileOpen, onToggleCollapse, onMobileC
               <Zap size={18} className="text-white fill-white" />
             </div>
             <div className="flex-1">
-              <span className="font-display font-black text-rose-text text-base tracking-tight uppercase">Bulk<span className="text-rose-pine">Reach</span></span>
+              <span className="font-display font-black text-rose-text text-base tracking-tight uppercase">Talent<span className="text-rose-pine">Stream</span></span>
               <p className="font-display text-[9px] text-rose-iris font-black uppercase tracking-widest mt-0.5">Outreach Platform</p>
             </div>
             <button onClick={onMobileClose} className="text-rose-muted hover:text-rose-text p-1 transition-colors">

@@ -8,6 +8,7 @@ Use only for personal / research purposes or via LinkedIn's official API.
 import logging
 import random
 import time
+import urllib.parse
 from typing import List, Dict
 from .base_scraper import BaseScraper
 
@@ -88,10 +89,12 @@ class LinkedInScraper(BaseScraper):
         elif freshness == "month":
             tpr_param = "&f_TPR=r2592000"
 
-        import urllib.parse
         encoded_kw = urllib.parse.quote(keywords)
         encoded_loc = urllib.parse.quote(location)
         results: List[Dict] = []
+        seen_urls = set()
+        seen_titles_companies = set()
+
 
         try:
             with sync_playwright() as p:
@@ -159,6 +162,16 @@ class LinkedInScraper(BaseScraper):
                                 if not title or not company:
                                     continue
 
+                                # Skip already scraped listings
+                                url_clean = link.strip().lower() if link else ""
+                                comp_val = company.strip().lower()
+                                title_val = title.strip().lower()
+                                
+                                if url_clean and (url_clean in getattr(self, "existing_urls", set()) or url_clean in seen_urls):
+                                    continue
+                                if comp_val and title_val and ((comp_val, title_val) in getattr(self, "existing_titles_companies", set()) or (comp_val, title_val) in seen_titles_companies):
+                                    continue
+
                                 results.append({
                                     "job_title": title,
                                     "company": company,
@@ -166,6 +179,10 @@ class LinkedInScraper(BaseScraper):
                                     "linkedin_url": link,
                                     "posted_date": posted_date,
                                 })
+                                if url_clean:
+                                    seen_urls.add(url_clean)
+                                if comp_val and title_val:
+                                    seen_titles_companies.add((comp_val, title_val))
                             except Exception as ex:
                                 logger.debug("LinkedIn card parse error: %s", ex)
                                 continue

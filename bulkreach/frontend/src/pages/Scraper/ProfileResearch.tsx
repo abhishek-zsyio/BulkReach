@@ -336,7 +336,7 @@ export function ProfileResearch() {
                 </div>
                 <h3 className="text-base font-extrabold text-rose-text uppercase animate-pulse">Running AI Profiler...</h3>
                 <p className="text-rose-muted text-xs mt-2 max-w-sm font-bold leading-relaxed">
-                  BulkReach is gathering search engine insights and scanning the target profile details. This will take about 20–40 seconds.
+                  TalentStream is gathering search engine insights and scanning the target profile details. This will take about 20–40 seconds.
                 </p>
               </motion.div>
             ) : selectedResearch.status === "failed" ? (

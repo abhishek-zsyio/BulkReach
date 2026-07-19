@@ -25,7 +25,7 @@ export function AppLayout() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-rose-base relative grid-bg noise-bg">
+    <div className="flex flex-1 overflow-hidden relative grid-bg noise-bg">
       <Sidebar
         isCollapsed={isCollapsed}
         isMobileOpen={isMobileOpen}

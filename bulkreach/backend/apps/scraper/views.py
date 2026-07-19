@@ -71,16 +71,28 @@ class ScrapeJobListCreateView(APIView):
             company_size=data.get("company_size", "any"),
         )
 
+        from django.conf import settings
+        import uuid
         from .tasks import run_scrape_job
-        task = run_scrape_job.apply_async(args=[job.id], queue="scraping")
-        job.celery_task_id = task.id
+
+        task_id = str(uuid.uuid4())
+        if getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False):
+            import threading
+            thread = threading.Thread(target=run_scrape_job, args=[job.id])
+            thread.daemon = True
+            thread.start()
+        else:
+            task = run_scrape_job.apply_async(args=[job.id], queue="scraping")
+            task_id = task.id
+
+        job.celery_task_id = task_id
         job.save(update_fields=["celery_task_id"])
 
         return Response(
             {
                 "id": job.id,
                 "message": "Scrape job started.",
-                "task_id": task.id,
+                "task_id": task_id,
                 "job": ScrapeJobSerializer(job).data,
             },
             status=status.HTTP_202_ACCEPTED,
@@ -261,7 +273,7 @@ class ScrapeJobResultsView(APIView):
 
         # Pagination
         paginator = StandardResultsPagination()
-        paginator.page_size = int(request.query_params.get("page_size", 100))
+        paginator.page_size = int(request.query_params.get("page_size", 10))
         page = paginator.paginate_queryset(contacts_list, request)
 
         contacts_serializer = ScrapedContactSerializer(page, many=True)
@@ -351,12 +363,16 @@ class ScrapeJobImportView(APIView):
         # Create saved job applications for each new contact imported
         from apps.campaigns.models import JobApplication
         job_apps_to_create = []
+        # Pre-fetch all existing (company_name, job_title) pairs for this user
+        # to avoid N+1 queries inside the loop.
+        existing_job_apps = set(
+            JobApplication.objects.filter(user=request.user)
+            .values_list("company_name", "job_title")
+        )
+
         for c in contacts:
-            if not JobApplication.objects.filter(
-                user=request.user,
-                company_name=c.company or "Unknown",
-                job_title=c.job_title or "Position",
-            ).exists():
+            key = (c.company or "Unknown", c.job_title or "Position")
+            if key not in existing_job_apps:
                 job_apps_to_create.append(
                     JobApplication(
                         user=request.user,
@@ -370,6 +386,8 @@ class ScrapeJobImportView(APIView):
                         campaign=campaign,
                     )
                 )
+                # Add to the set so duplicates within the same batch are also skipped
+                existing_job_apps.add(key)
 
         if job_apps_to_create:
             JobApplication.objects.bulk_create(job_apps_to_create, ignore_conflicts=True)
@@ -531,9 +549,21 @@ class ScrapeJobRetryView(APIView):
         job.save()
 
         # Trigger the celery task
+        from django.conf import settings
+        import uuid
         from .tasks import run_scrape_job
-        task = run_scrape_job.apply_async(args=[job.id], queue="scraping")
-        job.celery_task_id = task.id
+
+        task_id = str(uuid.uuid4())
+        if getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False):
+            import threading
+            thread = threading.Thread(target=run_scrape_job, args=[job.id])
+            thread.daemon = True
+            thread.start()
+        else:
+            task = run_scrape_job.apply_async(args=[job.id], queue="scraping")
+            task_id = task.id
+
+        job.celery_task_id = task_id
         job.save(update_fields=["celery_task_id"])
 
         return Response(

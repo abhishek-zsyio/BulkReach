@@ -139,5 +139,54 @@ class GlassdoorScraper(BaseScraper):
         except Exception as exc:
             logger.error("Glassdoor scraper browser context failed: %s", exc)
 
+        if not results:
+            logger.info("Glassdoor direct scraper returned 0 results. Trying DuckDuckGo search fallback...")
+            try:
+                from ddgs import DDGS
+                query = f'site:glassdoor.com/job-listing OR site:glassdoor.com/Job "{keywords}" "{location}"'
+                with DDGS() as ddgs:
+                    ddg_results = ddgs.text(query, max_results=max_results)
+                    if ddg_results:
+                        seen_urls = set()
+                        seen_titles_companies = set()
+                        for r in ddg_results:
+                            title = r.get("title", "")
+                            link = r.get("href", "")
+                            if not title or not link or link in seen_urls:
+                                continue
+                            
+                            url_clean = link.strip().lower()
+                            if url_clean in getattr(self, "existing_urls", set()):
+                                continue
+                            
+                            company = "Unknown"
+                            job_title = title
+                            if " at " in title:
+                                parts = title.split(" at ")
+                                job_title = parts[0].strip()
+                                remaining = parts[1]
+                                if " | " in remaining:
+                                    company = remaining.split(" | ")[0].strip()
+                                elif " - " in remaining:
+                                    company = remaining.split(" - ")[0].strip()
+                                else:
+                                    company = remaining.strip()
+                            
+                            comp_val = company.strip().lower()
+                            title_val = job_title.strip().lower()
+                            if comp_val and title_val and ((comp_val, title_val) in getattr(self, "existing_titles_companies", set()) or (comp_val, title_val) in seen_titles_companies):
+                                continue
+
+                            results.append({
+                                "job_title": job_title,
+                                "company": company,
+                                "source_url": link,
+                            })
+                            seen_urls.add(link)
+                            if comp_val and title_val:
+                                seen_titles_companies.add((comp_val, title_val))
+            except Exception as ddg_exc:
+                logger.error("Glassdoor DDG fallback search failed: %s", ddg_exc)
+
         logger.info("Glassdoor scraper returned %d raw results.", len(results))
         return self._resolve_contacts_concurrently(results[:max_results])

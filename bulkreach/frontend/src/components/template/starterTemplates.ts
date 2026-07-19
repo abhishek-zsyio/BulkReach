@@ -981,7 +981,7 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
   {
     id: "welcome-onboarding",
     name: "Welcome / Onboarding",
-    subject: "Welcome to BulkReach!",
+    subject: "Welcome to TalentStream!",
     description: "Warm welcome layout with step-by-step Quickstart guide",
     icon: "gift",
     html: `<!DOCTYPE html>
@@ -994,14 +994,14 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
           <tr style="background-color:#3a94c5;background-image:linear-gradient(135deg,#3a94c5 0%,#df69ba 100%);">
             <td style="padding:32px 32px 24px;border-bottom:2px solid #3a3f3f;text-align:center;">
               <p style="margin:0;color:#ffffff;font-size:32px;">🎉</p>
-              <p style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:900;letter-spacing:-0.5px;">Welcome to BulkReach!</p>
+              <p style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:900;letter-spacing:-0.5px;">Welcome to TalentStream!</p>
             </td>
           </tr>
           <tr>
             <td style="padding:32px;">
               <p style="margin:0 0 16px;color:#3a3f3f;font-size:15px;line-height:1.7;font-weight:600;">Hi {{ recipient_name }},</p>
               <p style="margin:0 0 24px;color:#3a3f3f;font-size:15px;line-height:1.7;">
-                We are excited to have you onboard at <strong>{{ company_name }}</strong>. BulkReach is designed to help you streamline your bulk outreach loops from day one.
+                We are excited to have you onboard at <strong>{{ company_name }}</strong>. TalentStream is designed to help you streamline your bulk outreach loops from day one.
               </p>
 
               <!-- Quickstart card -->

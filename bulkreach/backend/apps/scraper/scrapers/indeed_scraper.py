@@ -81,7 +81,10 @@ class IndeedScraper(BaseScraper):
         encoded_kw = urllib.parse.quote(keywords)
         encoded_loc = urllib.parse.quote(location)
         results: List[Dict] = []
+        seen_urls = set()
+        seen_titles_companies = set()
         start = 0
+
 
         try:
             with sync_playwright() as p:
@@ -142,11 +145,25 @@ class IndeedScraper(BaseScraper):
                                 if not title or not company:
                                     continue
 
+                                # Skip already scraped listings
+                                url_clean = link.strip().lower() if link else ""
+                                comp_val = company.strip().lower()
+                                title_val = title.strip().lower()
+                                
+                                if url_clean and (url_clean in getattr(self, "existing_urls", set()) or url_clean in seen_urls):
+                                    continue
+                                if comp_val and title_val and ((comp_val, title_val) in getattr(self, "existing_titles_companies", set()) or (comp_val, title_val) in seen_titles_companies):
+                                    continue
+
                                 results.append({
                                     "job_title": title,
                                     "company": company,
                                     "source_url": link,
                                 })
+                                if url_clean:
+                                    seen_urls.add(url_clean)
+                                if comp_val and title_val:
+                                    seen_titles_companies.add((comp_val, title_val))
                             except Exception as ex:
                                 logger.debug("Indeed card parse error: %s", ex)
                                 continue

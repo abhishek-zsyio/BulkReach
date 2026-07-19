@@ -99,21 +99,21 @@ export function ResearchModal({
                     </span>
                     <div className="border-2 border-rose-border p-3.5 bg-rose-surface">
                       <label htmlFor="company-name" className="block text-[10px] font-black uppercase tracking-widest text-rose-love mb-1.5">
-                        Company Name — required
+                        Company Name or LinkedIn URL — required
                       </label>
                       <input
                         id="company-name"
                         type="text"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="e.g. Stripe, Google, Airbnb"
+                        placeholder="e.g. Stripe, or https://linkedin.com/company/stripe"
                         className="w-full bg-transparent font-bold text-sm text-rose-text placeholder:text-rose-muted placeholder:font-semibold focus:outline-none"
                         autoFocus
                         required
                       />
                     </div>
                     <p className="text-[10px] text-rose-muted mt-2 font-bold leading-relaxed">
-                      The AI automatically discovers target websites, domains, HQ coordinates, and branding.
+                      Enter a company name or paste a direct LinkedIn Company Page URL to automatically discover branding, domain info, and employees.
                     </p>
                   </div>
 

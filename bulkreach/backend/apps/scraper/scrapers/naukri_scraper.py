@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 CARD_SELECTORS = [
     "article.jobTuple",         # older layout
     "div.srp-jobtuple-wrapper", # newer layout
-    "li.jobs-search-results__list-item",
 ]
 TITLE_SELECTORS = [
     "a.title",
@@ -95,6 +94,9 @@ class NaukriScraper(BaseScraper):
             return []
 
         results: List[Dict] = []
+        seen_urls = set()
+        seen_titles_companies = set()
+
         page_num = 1
 
         try:
@@ -158,6 +160,16 @@ class NaukriScraper(BaseScraper):
                                 if not title or not company:
                                     continue
 
+                                # Skip already scraped listings
+                                url_clean = link.strip().lower() if link else ""
+                                comp_val = company.strip().lower()
+                                title_val = title.strip().lower()
+                                
+                                if url_clean and (url_clean in getattr(self, "existing_urls", set()) or url_clean in seen_urls):
+                                    continue
+                                if comp_val and title_val and ((comp_val, title_val) in getattr(self, "existing_titles_companies", set()) or (comp_val, title_val) in seen_titles_companies):
+                                    continue
+
                                 results.append({
                                     "job_title": title,
                                     "company": company,
@@ -166,6 +178,10 @@ class NaukriScraper(BaseScraper):
                                     "location": location_val,
                                     "salary": salary_val,
                                 })
+                                if url_clean:
+                                    seen_urls.add(url_clean)
+                                if comp_val and title_val:
+                                    seen_titles_companies.add((comp_val, title_val))
                             except Exception as ex:
                                 logger.debug("Naukri card parse error: %s", ex)
                                 continue

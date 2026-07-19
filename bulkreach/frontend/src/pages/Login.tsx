@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/store/slices/authSlice";
 import { Eye, EyeOff, Zap, ArrowRight, Mail, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/utils/constants";
+import { openExternalLink } from "@/utils/navigation";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 
@@ -27,8 +30,9 @@ const itemVariants = {
 };
 
 export function Login() {
-  const { login } = useAuth();
+  const { login, fetchUserProfile } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: "", password: "" });
@@ -49,13 +53,60 @@ export function Login() {
     }
   };
 
+  const startPolling = (state: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/desktop-login/status/?state=${state}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.access && data.refresh) {
+          clearInterval(interval);
+          dispatch(
+            setCredentials({
+              user: {
+                id: 0,
+                username: "",
+                email: "",
+                first_name: "",
+                last_name: "",
+                sender_name: "",
+                sender_email: "",
+                gmail_connected: true,
+                is_onboarded: false,
+              },
+              access: data.access,
+              refresh: data.refresh,
+            })
+          );
+          const profile = await fetchUserProfile(data.access);
+          toast.success("Successfully signed in with Google!");
+          navigate(profile?.is_onboarded ? "/dashboard" : "/onboarding");
+        }
+      } catch (err) {
+        console.error("Polling error during desktop login:", err);
+      }
+    }, 1500);
+  };
+
   const handleGoogleLogin = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/google/login-url/`);
+      const origin = window.location.origin;
+      const response = await fetch(`${API_BASE_URL}/auth/google/login-url/?origin=${encodeURIComponent(origin)}`);
       if (!response.ok) throw new Error("Failed to get Google login URL");
       const data = await response.json();
       if (data.auth_url) {
-        window.location.href = data.auth_url;
+        const urlObj = new URL(data.auth_url);
+        const state = urlObj.searchParams.get("state") || "";
+
+        // Track that we are initiating Google Login in this web browser tab
+        localStorage.setItem("google_login_active", "true");
+
+        const isElectron = typeof window !== "undefined" && !!window.electronAPI;
+        if (isElectron) {
+          startPolling(state);
+        }
+
+        await openExternalLink(data.auth_url);
       }
     } catch {
       toast.error("Failed to initiate Google sign in.");
@@ -63,7 +114,7 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex bg-rose-base font-sans">
+    <div className="h-full flex bg-rose-base font-sans">
       {/* ── Left Branding Panel ── */}
       <motion.div 
         initial={{ opacity: 0, x: -40 }}
@@ -119,7 +170,7 @@ export function Login() {
             className="text-rose-muted text-sm leading-relaxed max-w-md font-bold"
           >
             AI-powered bulk email outreach that feels one-to-one. Upload your
-            contacts, personalize your message using Gemini, and let BulkReach do the rest.
+            contacts, personalize your message using Gemini, and let TalentStream do the rest.
           </motion.p>
 
           {/* Mock Live Send Card */}
@@ -192,7 +243,7 @@ export function Login() {
         </motion.div>
 
         <p className="text-rose-muted text-xs relative z-10 font-bold uppercase tracking-wider select-none">
-          © {new Date().getFullYear()} BulkReach. Production-ready outreach platform.
+          © {new Date().getFullYear()} TalentStream. Production-ready outreach platform.
         </p>
       </motion.div>
 

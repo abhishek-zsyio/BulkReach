@@ -206,7 +206,7 @@ FIELD_ENCRYPTION_KEY = config("FIELD_ENCRYPTION_KEY", default="")
 
 # ─── DRF Spectacular (API Docs) ──────────────────────────────────────────────
 SPECTACULAR_SETTINGS = {
-    "TITLE": "BulkReach API",
+    "TITLE": "TalentStream API",
     "DESCRIPTION": "AI-Powered Job Outreach Platform",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,

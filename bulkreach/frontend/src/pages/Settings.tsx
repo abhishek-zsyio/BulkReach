@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/utils/constants";
+import { openExternalLink } from "@/utils/navigation";
 import toast from "react-hot-toast";
 import { Settings, Mail, CheckCircle2, AlertTriangle, Eye, EyeOff, Loader2, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -122,12 +123,13 @@ export function SettingsPage() {
 
   const handleConnectGmail = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/gmail/connect/?redirect_to=settings`, {
+      const origin = window.location.origin;
+      const res = await fetch(`${API_BASE_URL}/auth/gmail/connect/?redirect_to=settings&origin=${encodeURIComponent(origin)}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const data = await res.json();
       if (data.auth_url) {
-        window.location.href = data.auth_url;
+        await openExternalLink(data.auth_url);
       } else {
         toast.error("Failed to retrieve Google authentication link.");
       }
@@ -271,8 +273,6 @@ export function SettingsPage() {
                   <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended - Fastest)</option>
                   <option value="gemini-2.5-pro">Gemini 2.5 Pro (Most Powerful Reasoning)</option>
                   <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                  <option value="gemini-1.5-pro">Gemini 1.5 Pro (High Reasoning)</option>
                 </select>
                 <p className="text-[10px] text-rose-muted mt-1.5 font-bold">
                   Choose the Google Gemini AI model used for resume parsing, outreach customization, and web scraper matching.

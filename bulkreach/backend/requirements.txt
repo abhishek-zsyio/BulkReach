@@ -26,3 +26,4 @@ beautifulsoup4>=4.12
 scrapy>=2.11
 google-genai>=0.3.0
 ddgs>=9.0.0
+tzdata

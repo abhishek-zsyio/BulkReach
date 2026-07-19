@@ -12,7 +12,7 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-const VALID_GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+const VALID_GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"];
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { user, fetchUserProfile, accessToken } = useAuth();
@@ -195,8 +195,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash — Recommended · Fastest" },
                           { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro — Most Powerful Reasoning" },
                           { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash — Fast & Balanced" },
-                          { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash — Legacy · Stable" },
-                          { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro — Legacy · High Reasoning" },
                         ]}
                         placeholder="Select Gemini model..."
                       />

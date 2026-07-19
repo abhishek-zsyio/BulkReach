@@ -83,7 +83,7 @@ export function LandingPage() {
   const handleCTA = () => navigate(isAuthenticated ? "/dashboard" : "/login");
 
   return (
-    <div className="min-h-screen bg-rose-base flex flex-col font-sans overflow-x-hidden selection:bg-rose-iris selection:text-white">
+    <div className="min-h-full bg-rose-base font-sans overflow-x-hidden selection:bg-rose-iris selection:text-white">
 
       {/* ── Navbar ── */}
       <nav className="h-[68px] px-6 md:px-16 flex items-center justify-between border-b-2 border-rose-border sticky top-0 z-50 bg-rose-surface/95 backdrop-blur-sm">
@@ -137,7 +137,7 @@ export function LandingPage() {
           </motion.h1>
 
           <motion.p variants={fadeUp} className="text-lg md:text-xl text-rose-muted font-semibold max-w-2xl mb-4 leading-relaxed">
-            BulkReach automates your entire job search — scraping listings, finding recruiters with AI, sending personalized Gmail campaigns, and tracking every application in a visual Kanban board.
+            TalentStream automates your entire job search — scraping listings, finding recruiters with AI, sending personalized Gmail campaigns, and tracking every application in a visual Kanban board.
           </motion.p>
           <motion.p variants={fadeUp} className="text-sm text-rose-muted/70 font-bold max-w-xl mb-12 tracking-wide uppercase">
             Naukri Scraper · AI Recruiter Finder · Company Research · Gmail Native · Application Tracker
@@ -370,7 +370,7 @@ export function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={stagger} className="text-center mb-20">
             <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-3 py-1.5 border-2 border-rose-pine text-rose-pine bg-rose-pine/10 text-xs font-black uppercase tracking-widest mb-6">
-              <Sparkles size={12} /> Why BulkReach
+              <Sparkles size={12} /> Why TalentStream
             </motion.div>
             <motion.h2 variants={fadeUp} className="text-4xl md:text-6xl font-black text-rose-text tracking-tight uppercase leading-tight mb-4">
               Smarter Than<br /><span className="text-rose-pine">Manual Job Hunting</span>
@@ -454,7 +454,7 @@ export function LandingPage() {
               { step: "01", icon: Mail, title: "Connect Your Gmail", color: "text-rose-pine", bg: "bg-rose-pine/10", accent: "border-rose-pine", desc: "One-click Google OAuth. Your emails send from your real Gmail address — no shared IPs, no cold SMTP. Your reputation stays intact.", pills: ["Zero password storage", "Official OAuth2", "Multiple accounts"] },
               { step: "02", icon: Search, title: "Scrape Jobs + Find Recruiters", color: "text-rose-foam", bg: "bg-rose-foam/10", accent: "border-rose-foam", desc: "Run the Naukri scraper to extract hundreds of live job listings. Then hit 'AI Scan' to automatically find each recruiter's name, email, and LinkedIn.", pills: ["Background scraping", "AI recruiter extraction", "LinkedIn URL tracking"] },
               { step: "03", icon: Sparkles, title: "Generate AI Email Templates", color: "text-rose-iris", bg: "bg-rose-iris/10", accent: "border-rose-iris", desc: "Upload your resume, pick a target job role, and let Gemini AI write a beautiful personalized email template. Check the spam score before sending.", pills: ["Resume-aware AI", "Spam score analysis", "20+ starter templates"] },
-              { step: "04", icon: Zap, title: "Launch Campaign + Track Applications", color: "text-rose-love", bg: "bg-rose-love/10", accent: "border-rose-love", desc: "Hit Launch. BulkReach sends all emails with rate limiting, tracks opens, and automatically adds each application to your Kanban board.", pills: ["Live progress tracking", "Auto application tracking", "Export send logs"] },
+              { step: "04", icon: Zap, title: "Launch Campaign + Track Applications", color: "text-rose-love", bg: "bg-rose-love/10", accent: "border-rose-love", desc: "Hit Launch. TalentStream sends all emails with rate limiting, tracks opens, and automatically adds each application to your Kanban board.", pills: ["Live progress tracking", "Auto application tracking", "Export send logs"] },
             ].map((step, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }}
                 variants={i % 2 === 0 ? fadeLeft : fadeRight}
@@ -548,12 +548,12 @@ export function LandingPage() {
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { name: "Arjun Sharma", role: "Senior SWE @ Razorpay", avatar: "AS", color: "bg-rose-pine", quote: "I landed 3 interviews in my first week using BulkReach. The AI recruiter finder is insane — it found direct hiring manager emails for 80% of Naukri listings I scraped." },
+              { name: "Arjun Sharma", role: "Senior SWE @ Razorpay", avatar: "AS", color: "bg-rose-pine", quote: "I landed 3 interviews in my first week using TalentStream. The AI recruiter finder is insane — it found direct hiring manager emails for 80% of Naukri listings I scraped." },
               { name: "Priya Mehta", role: "Product Manager @ Zepto", avatar: "PM", color: "bg-rose-iris", quote: "The Kanban tracker alone is worth it. All my applications auto-populate when campaigns send, and I can track every stage. Went from chaos to complete clarity." },
               { name: "Rahul Verma", role: "DevRel @ Sentry", avatar: "RV", color: "bg-rose-foam", quote: "Best outreach tool I've used. The spam checker saved me — I had 'limited time offer' in my subject line and it flagged it before I sent 200 emails." },
               { name: "Sanya Kapoor", role: "Freelance Designer", avatar: "SK", color: "bg-rose-love", quote: "The Company Research module found me HR contacts at companies that had no public job listings. Got a role that was never even posted on any job board." },
               { name: "Dev Patel", role: "ML Engineer @ Anthropic", avatar: "DP", color: "bg-rose-gold", quote: "Setup is genuinely 5 minutes. Connect Gmail, scrape Naukri, AI scan for recruiters, pick a template, launch. The whole flow just works." },
-              { name: "Neha Singh", role: "Startup Founder", avatar: "NS", color: "bg-rose-pine", quote: "We use BulkReach for B2B cold email. The email client preview is brilliant — we caught a broken layout in Outlook before it went to 400 leads." },
+              { name: "Neha Singh", role: "Startup Founder", avatar: "NS", color: "bg-rose-pine", quote: "We use TalentStream for B2B cold email. The email client preview is brilliant — we caught a broken layout in Outlook before it went to 400 leads." },
             ].map((t, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-30px" }}
                 variants={fadeUp} transition={{ delay: (i % 3) * 0.1 }}
@@ -617,7 +617,7 @@ export function LandingPage() {
               Ready to Land<br /><span className="text-rose-pine">Your Dream Job?</span>
             </motion.h2>
             <motion.p variants={fadeUp} className="text-rose-muted text-lg font-semibold mb-10 max-w-xl mx-auto leading-relaxed">
-              Join professionals automating their job search with BulkReach. Scrape, find recruiters, send personalized emails, and track every application — all in one place.
+              Join professionals automating their job search with TalentStream. Scrape, find recruiters, send personalized emails, and track every application — all in one place.
             </motion.p>
             <motion.div variants={fadeUp}>
               <button onClick={handleCTA} className="btn-primary px-12 py-5 text-lg font-extrabold flex items-center justify-center gap-2 mx-auto shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:shadow-[6px_6px_0px_0px_var(--color-shadow)] hover:-translate-x-[2px] hover:-translate-y-[2px] transition-all duration-300">
@@ -650,7 +650,7 @@ export function LandingPage() {
               <div className="w-8 h-8 bg-rose-pine border-2 border-rose-border flex items-center justify-center shadow-[2px_2px_0px_0px_var(--color-shadow)]">
                 <Zap size={14} className="text-white fill-white" />
               </div>
-              <span className="font-black text-rose-text text-base uppercase tracking-tight">BulkReach</span>
+              <span className="font-black text-rose-text text-base uppercase tracking-tight">TalentStream</span>
               <span className="text-[9px] font-black border border-rose-foam text-rose-foam px-1.5 py-0.5">v2.5</span>
             </div>
             <p className="text-rose-muted text-sm font-semibold leading-relaxed max-w-xs">
@@ -680,7 +680,7 @@ export function LandingPage() {
           </div>
         </div>
         <div className="border-t-2 border-rose-border px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl mx-auto">
-          <p className="text-xs font-bold text-rose-muted">© {new Date().getFullYear()} BulkReach. All rights reserved.</p>
+          <p className="text-xs font-bold text-rose-muted">© {new Date().getFullYear()} TalentStream. All rights reserved.</p>
           <div className="flex items-center gap-4 text-xs font-bold text-rose-muted">
             <span className="flex items-center gap-1.5">
               <span className="relative flex h-1.5 w-1.5">

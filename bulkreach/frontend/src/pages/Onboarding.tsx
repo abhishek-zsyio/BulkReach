@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { setUser as setReduxUser } from "@/store/slices/authSlice";
 import { API_BASE_URL } from "@/utils/constants";
+import { openExternalLink } from "@/utils/navigation";
 import { useUploadResumeMutation } from "@/api/resumeApi";
 import { useCreateTemplateMutation } from "@/api/campaignApi";
 import toast from "react-hot-toast";
@@ -185,12 +186,13 @@ export function Onboarding() {
 
   const handleGmailConnect = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/gmail/connect/?redirect_to=onboarding`, {
+      const origin = window.location.origin;
+      const res = await fetch(`${API_BASE_URL}/auth/gmail/connect/?redirect_to=onboarding&origin=${encodeURIComponent(origin)}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const data = await res.json();
       if (data.auth_url) {
-        window.location.href = data.auth_url;
+        await openExternalLink(data.auth_url);
       } else {
         toast.error("Failed to retrieve Google connection link.");
       }
@@ -241,14 +243,14 @@ export function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-rose-base relative overflow-hidden font-sans p-6 grid-bg noise-bg">
+    <div className="h-full flex flex-col justify-between bg-rose-base relative overflow-hidden font-sans p-6 grid-bg noise-bg">
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between max-w-4xl w-full mx-auto py-4 border-b-2 border-rose-border">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-none flex items-center justify-center text-white bg-rose-pine border-2 border-rose-border">
             <Sparkles size={16} className="fill-white" />
           </div>
-          <span className="font-extrabold text-rose-text text-lg tracking-tight uppercase">BulkReach Setup</span>
+          <span className="font-extrabold text-rose-text text-lg tracking-tight uppercase">TalentStream Setup</span>
         </div>
         <button
           onClick={logoutUser}
@@ -363,7 +365,7 @@ export function Onboarding() {
               <div>
                 <h2 className="text-2xl font-extrabold text-rose-text tracking-tight mb-2 uppercase">Connect Gemini AI</h2>
                 <p className="text-sm text-rose-muted font-semibold mb-6">
-                  BulkReach uses **Gemini 1.5 Flash** to extract template variables and matching candidates from job listings. Input your API key to activate AI features.
+                  TalentStream uses **Gemini 1.5 Flash** to extract template variables and matching candidates from job listings. Input your API key to activate AI features.
                 </p>
                 
                 <div className="space-y-4">
@@ -509,7 +511,7 @@ export function Onboarding() {
               <div>
                 <h2 className="text-2xl font-extrabold text-rose-text tracking-tight mb-2 uppercase">Connect Gmail Account</h2>
                 <p className="text-sm text-rose-muted font-semibold mb-6">
-                  Connect your Google workspace or personal Gmail account to permit BulkReach to send personalized outreach drafts directly from your mailbox.
+                  Connect your Google workspace or personal Gmail account to permit TalentStream to send personalized outreach drafts directly from your mailbox.
                 </p>
                 
                 <div className="flex flex-col items-center justify-center py-6 text-center">
@@ -545,7 +547,7 @@ export function Onboarding() {
                 
                 <h2 className="text-3xl font-extrabold text-rose-text tracking-tight mb-3 uppercase">You're all set!</h2>
                 <p className="text-sm text-rose-muted font-semibold max-w-md mx-auto mb-8 leading-relaxed">
-                  BulkReach is successfully configured. You are now ready to set up candidate templates, scrape matching roles, and launch outreach campaigns.
+                  TalentStream is successfully configured. You are now ready to set up candidate templates, scrape matching roles, and launch outreach campaigns.
                 </p>
                 
                 <div className="w-full max-w-xs space-y-2 border-2 border-rose-border rounded-none p-4 bg-rose-overlay/40 text-left text-xs text-rose-muted">
@@ -676,7 +678,7 @@ export function Onboarding() {
 
       {/* Footer */}
       <footer className="relative z-10 text-center py-6 border-t-2 border-rose-border text-xs text-rose-muted font-bold uppercase tracking-wider bg-rose-surface">
-        © 2026 BulkReach. All configurations are securely hosted on sandbox.
+        © 2026 TalentStream. All configurations are securely hosted on sandbox.
       </footer>
     </div>
   );

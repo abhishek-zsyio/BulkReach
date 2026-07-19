@@ -876,8 +876,8 @@ export function ScraperDashboard() {
                       <span className="absolute top-0 left-0 bottom-0 w-[3px] bg-rose-iris" />
                       <Search size={16} className="absolute top-2.5 right-3 text-rose-iris opacity-15 group-hover:opacity-35 transition-opacity select-none" />
                       <div className="text-[8px] font-black uppercase text-rose-muted tracking-wider pl-1">Discovered</div>
-                      <div className="text-3xl font-black text-rose-iris mt-0.5 font-mono pl-1">{resultsData.count}</div>
-                      <div className="text-[8px] text-rose-muted font-bold pl-1 mt-0.5 uppercase tracking-wide">job postings</div>
+                      <div className="text-3xl font-black text-rose-iris mt-0.5 font-mono pl-1">{selectedJob?.result_count ?? resultsData.count}</div>
+                      <div className="text-[8px] text-rose-muted font-bold pl-1 mt-0.5 uppercase tracking-wide">total job postings</div>
                     </div>
                     <div className="border-2 border-rose-border bg-rose-surface p-4 relative overflow-hidden shadow-[3px_3px_0px_0px_var(--color-shadow)] group hover:shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all duration-150">
                       <span className="absolute top-0 left-0 bottom-0 w-[3px] bg-rose-pine" />
@@ -886,7 +886,7 @@ export function ScraperDashboard() {
                       <div className="text-3xl font-black text-rose-pine mt-0.5 font-mono pl-1">
                          {resultsData.contacts.filter(c => c.name && c.name !== "Hiring Manager").length}
                       </div>
-                      <div className="text-[8px] text-rose-muted font-bold pl-1 mt-0.5 uppercase tracking-wide">with direct contacts</div>
+                      <div className="text-[8px] text-rose-muted font-bold pl-1 mt-0.5 uppercase tracking-wide">on this page</div>
                     </div>
                     <div className="border-2 border-rose-border bg-rose-surface p-4 relative overflow-hidden shadow-[3px_3px_0px_0px_var(--color-shadow)] group hover:shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all duration-150">
                       <span className="absolute top-0 left-0 bottom-0 w-[3px] bg-rose-foam" />
@@ -895,7 +895,7 @@ export function ScraperDashboard() {
                       <div className="text-3xl font-black text-rose-foam mt-0.5 font-mono pl-1">
                         {resultsData.contacts.filter(c => c.email && !c.email.startsWith("careers@") && !c.email.startsWith("hr@")).length}
                       </div>
-                      <div className="text-[8px] text-rose-muted font-bold pl-1 mt-0.5 uppercase tracking-wide">direct addresses</div>
+                      <div className="text-[8px] text-rose-muted font-bold pl-1 mt-0.5 uppercase tracking-wide">direct on this page</div>
                     </div>
                     <div className="border-2 border-rose-border bg-rose-surface p-4 relative overflow-hidden shadow-[3px_3px_0px_0px_var(--color-shadow)] group hover:shadow-[4px_4px_0px_0px_var(--color-shadow)] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all duration-150">
                       <span className="absolute top-0 left-0 bottom-0 w-[3px] bg-rose-gold" />

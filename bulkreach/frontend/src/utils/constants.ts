@@ -1,10 +1,16 @@
 export const API_BASE_URL = (() => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
+  const isDesktop = typeof window !== "undefined" && (!!window.electronAPI || "__TAURI_IPC__" in window || window.location.protocol === "file:");
+
   if (envUrl && envUrl.trim() !== "") {
+    if (isDesktop && envUrl.startsWith("/")) {
+      return `http://127.0.0.1:8000${envUrl}`;
+    }
     return envUrl;
   }
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "localhost";
-  return `http://${hostname}:8000/api`;
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "127.0.0.1";
+  const targetHost = hostname === "localhost" || hostname === "" ? "127.0.0.1" : hostname;
+  return `http://${targetHost}:8000/api`;
 })();
 
 export const TOKEN_KEY = "bulkreach_access";

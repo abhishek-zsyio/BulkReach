@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Send, XCircle, BarChart3, Plus, Zap, Inbox, Upload, Briefcase, Trash2, FileText, ChevronRight, Check, X, Mail, Search } from "lucide-react";
 import { useGetCampaignsQuery, useGetGmailAuthUrlQuery, useDisconnectGmailMutation } from "@/api/campaignApi";
@@ -35,7 +35,7 @@ export function Dashboard() {
   const { confirm, modal } = useConfirm();
 
   const { data: aiStatus, refetch: refetchAIStatus } = useGetAIStatusQuery(undefined, {
-    pollingInterval: 10000,
+    pollingInterval: 30000,
   });
 
   // RTK Query hooks for Gmail auth — replaces raw fetch() calls
@@ -126,15 +126,13 @@ export function Dashboard() {
     }
   };
 
-  const totalSent = campaigns.reduce((s, c) => s + c.sent_count, 0);
-  const totalFailed = campaigns.reduce((s, c) => s + c.failed_count, 0);
-  const totalOpened = campaigns.reduce((s, c) => s + (c.opened_count || 0), 0);
-  
-
+  const totalSent = useMemo(() => campaigns.reduce((s, c) => s + c.sent_count, 0), [campaigns]);
+  const totalFailed = useMemo(() => campaigns.reduce((s, c) => s + c.failed_count, 0), [campaigns]);
+  const totalOpened = useMemo(() => campaigns.reduce((s, c) => s + (c.opened_count || 0), 0), [campaigns]);
 
   const openRate = totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : "—";
 
-  const stats = [
+  const stats = useMemo(() => [
     {
       label: "Total Campaigns",
       value: campaigns.length,
@@ -163,12 +161,12 @@ export function Dashboard() {
       bgClass: "bg-rose-love/10 border-rose-love/20 text-rose-love",
       accentColor: "var(--color-love)",
     },
-  ];
+  ], [campaigns.length, totalSent, totalOpened, totalFailed, openRate]);
 
-  const recentCampaigns = [...campaigns].slice(0, 6);
-  const runningCampaigns = campaigns.filter((c) => c.status === "running");
+  const recentCampaigns = useMemo(() => [...campaigns].slice(0, 6), [campaigns]);
+  const runningCampaigns = useMemo(() => campaigns.filter((c) => c.status === "running"), [campaigns]);
 
-  const chartData = campaigns
+  const chartData = useMemo(() => campaigns
     .slice()
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
     .map((c) => ({
@@ -176,7 +174,7 @@ export function Dashboard() {
       Sent: c.sent_count,
       Opened: c.opened_count || 0,
       Failed: c.failed_count,
-    }));
+    })), [campaigns]);
 
   const handleConnectGmail = async () => {
     try {

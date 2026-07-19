@@ -36,7 +36,6 @@ def _matches_freshness(posted_date: str, limit: str) -> bool:
     elif "yesterday" in date_lower:
         days = 1
     else:
-        import re
         digits = re.findall(r'\d+', date_lower)
         val = int(digits[0]) if digits else 1
         
@@ -213,12 +212,26 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
         if job.campaign and job.campaign.template:
             campaign_variables = _extract_campaign_variables(job.campaign.template.html_body)
 
+        # Get existing URLs of scraped contacts for this user to avoid re-scraping them
+        from apps.scraper.models import ScrapedContact
+        existing_contacts = ScrapedContact.objects.filter(job__user=job.user)
+        existing_urls = {
+            url.strip().lower()
+            for url in existing_contacts.exclude(source_url="").values_list("source_url", flat=True)
+        }
+        existing_titles_companies = {
+            (comp.strip().lower(), title.strip().lower())
+            for comp, title in existing_contacts.values_list("company", "job_title")
+            if comp and title
+        }
+
         # ── Primary scrape ──────────────────────────────────────────────────
         scraper_class = SCRAPER_MAP[job.platform]
-        scraper = scraper_class()
+        scraper = scraper_class(existing_urls=existing_urls, existing_titles_companies=existing_titles_companies)
 
         contacts = []
         direct_error = None
+        freshness_limit = getattr(job, "freshness", "any")
         try:
             contacts = scraper.scrape(
                 keywords=search_keywords,
@@ -231,9 +244,20 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
             direct_error = f"{job.platform.title()} scraper failed: {str(scraper_exc)}"
 
         # Filter primary contacts by freshness limit
-        freshness_limit = getattr(job, "freshness", "any")
         if freshness_limit and freshness_limit != "any":
             contacts = [c for c in contacts if _matches_freshness(c.get("posted_date"), freshness_limit)]
+
+        filtered_contacts = []
+        for c in contacts:
+            url_val = c.get("source_url", "").strip().lower()
+            comp_val = c.get("company", "").strip().lower()
+            title_val = c.get("job_title", "").strip().lower()
+            if url_val and url_val in existing_urls:
+                continue
+            if comp_val and title_val and (comp_val, title_val) in existing_titles_companies:
+                continue
+            filtered_contacts.append(c)
+        contacts = filtered_contacts
 
         # ── AI matching for primary results ─────────────────────────────────
         job_matches = _run_ai_matching(gemini_api_key, resume_text, contacts, campaign_variables, job)
@@ -248,7 +272,7 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
 
         if len(contacts) < 3 and job.platform != ScrapeJob.Platform.WEB:
             logger.info("Scraper for %s returned only %d results. Falling back to WebScraper.", job.platform, len(contacts))
-            fallback_scraper = WebScraper()
+            fallback_scraper = WebScraper(existing_urls=existing_urls, existing_titles_companies=existing_titles_companies)
             try:
                 fallback_results = fallback_scraper.scrape(
                     keywords=search_keywords,
@@ -263,8 +287,21 @@ def run_scrape_job(self, scrape_job_id: int) -> dict:
                         fallback_results = [c for c in fallback_results if _matches_freshness(c.get("posted_date"), freshness_limit)]
                     
                     # Deduplicate: don't add fallback URLs that are already in contacts
-                    seen_urls = {c.get("source_url") for c in contacts if c.get("source_url")}
-                    fallback_results = [r for r in fallback_results if r.get("source_url") not in seen_urls]
+                    seen_urls = {c.get("source_url", "").strip().lower() for c in contacts if c.get("source_url")}
+                    
+                    # Filter out already scraped contacts from fallback results
+                    filtered_fallback = []
+                    for r in fallback_results:
+                        url_val = r.get("source_url", "").strip().lower()
+                        comp_val = r.get("company", "").strip().lower()
+                        title_val = r.get("job_title", "").strip().lower()
+                        
+                        if url_val and (url_val in existing_urls or url_val in seen_urls):
+                            continue
+                        if comp_val and title_val and (comp_val, title_val) in existing_titles_companies:
+                            continue
+                        filtered_fallback.append(r)
+                    fallback_results = filtered_fallback
                     
                     if fallback_results:
                         error_msg = (
@@ -480,10 +517,36 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
 
         client = genai.Client(api_key=api_key)
         company_name = enrichment.company_name
+        linkedin_handle = None
+
+        # Parse company name if a URL is provided
+        import urllib.parse
+        company_query_name = company_name
+        company_name_lower = company_name.lower().strip()
+        
+        if (
+            company_name_lower.startswith("http://") 
+            or company_name_lower.startswith("https://") 
+            or "linkedin.com/company/" in company_name_lower
+        ):
+            url_clean = company_name.strip(" /")
+            if "linkedin.com/company/" in company_name_lower:
+                parts = company_name_lower.split("linkedin.com/company/")
+                if len(parts) > 1:
+                    handle = parts[1].split("/")[0].split("?")[0].strip()
+                    linkedin_handle = handle
+                    company_query_name = handle.replace("-", " ").replace("_", " ").title()
+            else:
+                try:
+                    parsed_url = urllib.parse.urlparse(url_clean)
+                    domain_name = parsed_url.netloc.replace("www.", "")
+                    company_query_name = domain_name.split(".")[0].title()
+                except Exception:
+                    pass
 
         # 1. Search for company details
-        logger.info("Running company details search for: %s", company_name)
-        company_query = f'"{company_name}" company website location industry description'
+        logger.info("Running company details search for: %s (query name: %s)", company_name, company_query_name)
+        company_query = f'"{company_query_name}" company website location industry description'
         company_search_results = _perform_web_search(company_query, max_results=5)
 
         if not company_search_results:
@@ -543,7 +606,23 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
         enrichment.logo_url = logo_url
         enrichment.save()
 
-        # 2. Search for employees using the normalized name
+        # 2. Search for employees using the brand name (cleaned of corporate suffixes)
+        import re
+        def clean_company_brand_name(name_str: str) -> str:
+            suffixes = [
+                r'\bprivate\s+limited\b', r'\bpvt\s+ltd\b', r'\bprivate\s+ltd\b', r'\bprivate\b', r'\blimited\b',
+                r'\bltd\b', r'\binc\b', r'\bincorporated\b', r'\bllc\b', r'\bcorp\b',
+                r'\bcorporation\b', r'\bco\b', r'\bgroup\b'
+            ]
+            cleaned = name_str
+            cleaned = " ".join(cleaned.split())
+            for suffix in suffixes:
+                cleaned = re.compile(suffix, re.IGNORECASE).sub('', cleaned)
+            cleaned = cleaned.replace('"', '').replace("'", "").strip(' .,-')
+            cleaned = " ".join(cleaned.split())
+            return cleaned if cleaned else name_str
+
+        search_brand_name = clean_company_brand_name(normalized_name)
         titles_to_use = job_titles or ["HR", "Recruiter", "Talent Acquisition", "Engineering Manager", "Hiring Manager"]
         
         employee_search_results = []
@@ -551,14 +630,18 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
         
         # Query each title individually to get highly targeted results
         for title in titles_to_use:
-            employee_query = f'site:linkedin.com/in/ "{normalized_name}" "{title}"'
-            logger.info("Searching for employees of %s with query: %s", normalized_name, employee_query)
-            results = _perform_web_search(employee_query, max_results=6)
-            for r in results:
-                link = r.get("link", "")
-                if link and link not in seen_links:
-                    seen_links.add(link)
-                    employee_search_results.append(r)
+            queries = [f'site:linkedin.com/in/ "{search_brand_name}" "{title}"']
+            if linkedin_handle:
+                queries.append(f'site:linkedin.com/in/ "{linkedin_handle}" "{title}"')
+            
+            for employee_query in queries:
+                logger.info("Searching for employees of %s with query: %s", search_brand_name, employee_query)
+                results = _perform_web_search(employee_query, max_results=6)
+                for r in results:
+                    link = r.get("link", "")
+                    if link and link not in seen_links:
+                        seen_links.add(link)
+                        employee_search_results.append(r)
             
             # Short sleep to prevent rate limits
             import time
@@ -567,10 +650,11 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
         employees_list = []
         if employee_search_results:
             employee_prompt = f"""
-            Analyze the following search results for employees at "{normalized_name}".
+            Analyze the following search results for employees at "{search_brand_name}".
             Your task is to identify and extract the name, job title, and LinkedIn URL of only the employees who match the target job titles or functions, and generate outreach insights.
 
-            Company: {normalized_name}
+            Company Brand Name: {search_brand_name}
+            Full Legal Name (for reference): {normalized_name}
             Company Domain: {domain or 'company.com'}
             Target Job Titles/Functions: {', '.join(titles_to_use)}
 
@@ -579,8 +663,8 @@ def run_company_enrichment(self, enrichment_id: int, job_titles: list[str]) -> d
 
             Instructions:
             1. Extract the full personal name of each employee. Ignore results that are not individuals (e.g. jobs, companies).
-            2. CRITICAL: Strictly verify that the employee is CURRENTLY working at or associated with "{normalized_name}". The company name "{normalized_name}" (or a close variation) MUST be explicitly mentioned in the search result's title or snippet text. If "{normalized_name}" is NOT mentioned in the title/snippet, or if the person is working at another company, you MUST EXCLUDE them. Do NOT assume they work at the company just because they appeared in the search results.
-            3. Extract their exact job title at "{normalized_name}".
+            2. CRITICAL: Strictly verify that the employee is CURRENTLY working at or associated with the target company. The company name "{search_brand_name}" (or a close variation / brand name like "{search_brand_name}") MUST be explicitly mentioned in the search result's title or snippet text. Ignore legal/corporate suffixes like 'Private Limited', 'Pvt Ltd', 'LLC', 'Inc', 'Ltd', 'Co' during matching. If the person is working at another company, you MUST EXCLUDE them. Do NOT assume they work at the company just because they appeared in the search results.
+            3. Extract their exact job title at "{search_brand_name}".
             4. CRITICAL: Only include employees whose job title or role strictly matches or is closely related to the Target Job Titles/Functions: {', '.join(titles_to_use)}. Strictly exclude unrelated roles (e.g., developers, software engineers, sales representatives, marketing executives, designers, QA engineers, founders/owners, etc. unless they are explicitly listed in target titles).
             5. Extract their LinkedIn profile URL.
             6. Predict/synthesize their corporate email address based on their name and the company domain "{domain or 'company.com'}". Use common patterns like first.last@domain.com, ffirstlast@domain.com, or first@domain.com.
