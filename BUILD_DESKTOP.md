@@ -14,21 +14,23 @@ The desktop app is built using **Electron** for the user interface, which runs a
 
 ---
 
-## 💻 Windows Local Development & Setup (PowerShell)
+## 💻 Windows Local Development & Setup (Batch / PowerShell)
 
-We have provided native PowerShell automation scripts to match the macOS shell experience:
+We have provided Windows Batch wrappers and native PowerShell scripts to automate your local development setup:
 
-1. **Automated Setup**: Run the setup assistant in PowerShell from the repository root:
-   ```powershell
-   .\setup_local.ps1
+1. **Automated Setup (Click-to-Run)**:
+   Double-click the **`setup_local.bat`** file in the root folder, or run it from the command prompt:
+   ```cmd
+   .\setup_local.bat
    ```
-   This will check system prerequisites (Node, NPM, Python, Git), prompt you to configure Google credentials interactively, initialize the Python virtual environment, and install backend/frontend dependencies.
+   *This automatically bypasses PowerShell's default script ExecutionPolicy restrictions, checks system prerequisites, prompts you for Google credentials interactively, creates the Python virtual environment, and installs dependencies.*
 
-2. **Automated Execution**: To start local databases and launch services (Django Server, Celery Worker, Celery Beat, React Vite Client), run:
-   ```powershell
-   .\start_local.ps1
+2. **Automated Execution (Click-to-Run)**:
+   Double-click the **`start_local.bat`** file in the root folder, or run it from the command prompt:
+   ```cmd
+   .\start_local.bat
    ```
-   This script verifies port connections and spawns each service inside a separate, dedicated PowerShell window so you can monitor logs and terminate them easily.
+   *This will verify that local database ports are listening and launch all four services (Django, Celery Worker, Celery Beat, React Vite) in separate, dedicated PowerShell terminal windows so you can easily view log tracebacks.*
 
 ---
 
