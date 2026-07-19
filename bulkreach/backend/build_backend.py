@@ -81,6 +81,7 @@ def main():
     
     env = os.environ.copy()
     env["DJANGO_SETTINGS_MODULE"] = "config.settings.desktop"
+    env["PYTHONPATH"] = str(backend_dir)
 
     try:
         subprocess.run(pyinstaller_args, check=True, cwd=backend_dir, env=env)
