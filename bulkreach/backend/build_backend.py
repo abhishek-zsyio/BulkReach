@@ -9,6 +9,13 @@ import shutil
 import platform
 import subprocess
 from pathlib import Path
+import io
+
+# Force stdout/stderr to use UTF-8 to prevent Windows UnicodeEncodeError when printing emojis on legacy consoles
+if hasattr(sys.stdout, "buffer"):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "buffer"):
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 def get_tauri_target_triple():
     """Determine the platform target suffix expected by Tauri."""
