@@ -44,10 +44,14 @@ def main():
     print(f"📦 Tauri Target Triple: {target_triple}")
     print(f"🚀 Output Sidecar Name: {sidecar_name}")
     
-    # Resolve pyinstaller path from virtual environment
-    pyinstaller_bin = str(backend_dir / "venv" / "bin" / "pyinstaller")
+    # Resolve pyinstaller path (check venv first, then fall back to system PATH)
+    pyinstaller_bin = "pyinstaller"
+    venv_pyinstaller = backend_dir / "venv" / "bin" / "pyinstaller"
     if sys.platform == "win32":
-        pyinstaller_bin = str(backend_dir / "venv" / "Scripts" / "pyinstaller.exe")
+        venv_pyinstaller = backend_dir / "venv" / "Scripts" / "pyinstaller.exe"
+
+    if venv_pyinstaller.exists():
+        pyinstaller_bin = str(venv_pyinstaller)
         
     # Clean up the output directory if it exists to prevent PyInstaller conflicts
     dist_dir = backend_dir / "dist" / executable_name
