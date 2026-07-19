@@ -78,7 +78,7 @@ if [ ! -f "$BACKEND_DIR/.env" ]; then
     echo -e "${YELLOW}Warning: Backend .env file not found in $BACKEND_DIR/.env.${NC}"
     if [ -f "$BASE_DIR/env_setup.md" ]; then
         echo -e "${GREEN}Extracting backend .env template from env_setup.md...${NC}"
-        sed -n '/## 📁 Backend Configuration/,/---/p' "$BASE_DIR/env_setup.md" | sed -n '/```env/,/```/p' | grep -v '```' > "$BACKEND_DIR/.env"
+        sed -n '/## .*Backend Configuration/,/---/p' "$BASE_DIR/env_setup.md" | sed -n '/```env/,/```/p' | grep -v '```' > "$BACKEND_DIR/.env"
         echo -e "${GREEN}Successfully generated $BACKEND_DIR/.env template.${NC}"
         
         # Interactively prompt for Google OAuth Client secrets
@@ -118,7 +118,7 @@ if [ ! -f "$FRONTEND_DIR/.env" ]; then
     echo -e "${YELLOW}Warning: Frontend .env file not found in $FRONTEND_DIR/.env.${NC}"
     if [ -f "$BASE_DIR/env_setup.md" ]; then
         echo -e "${GREEN}Extracting frontend .env template from env_setup.md...${NC}"
-        sed -n '/## 📁 Frontend Configuration/,/$/p' "$BASE_DIR/env_setup.md" | sed -n '/```env/,/```/p' | grep -v '```' > "$FRONTEND_DIR/.env"
+        sed -n '/## .*Frontend Configuration/,/$/p' "$BASE_DIR/env_setup.md" | sed -n '/```env/,/```/p' | grep -v '```' > "$FRONTEND_DIR/.env"
         echo -e "${GREEN}Successfully generated $FRONTEND_DIR/.env template.${NC}"
         
         # Inject Google Client ID if we configured it in the step above
