@@ -4,6 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "main": "electron/main.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abhishek-zsyio/BulkReach.git"
+  },
   "scripts": {
     "dev": "vite --host",
     "build": "tsc && vite build",
@@ -11,8 +15,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "electron": "electron .",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://127.0.0.1:5173 && electron .\"",
-    "electron:build": "npm run build && electron-builder",
-    "electron:build:win": "npm run build && electron-builder --win"
+    "electron:build": "npm run build && electron-builder -p never",
+    "electron:build:win": "npm run build && electron-builder --win -p never"
   },
   "dependencies": {
     "react": "^18.3.1",
