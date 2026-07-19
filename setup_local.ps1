@@ -63,7 +63,7 @@ if (-not (Test-Path $backendEnvFile)) {
         Write-Host "Extracting backend .env template from env_setup.md..." -ForegroundColor Green
         
         $envSetupContent = Get-Content -Path $envSetupFile -Raw
-        $backendRegex = "(?s)## .*?Backend Configuration.*?\`\`\`env\r?\n(.*?)\`\`\`"
+        $backendRegex = '(?s)## .*?Backend Configuration.*?```env\r?\n(.*?)```'
         $backendMatch = [regex]::Match($envSetupContent, $backendRegex)
         if ($backendMatch.Success) {
             $backendMatch.Groups[1].Value | Out-File -FilePath $backendEnvFile -Encoding utf8 -NoNewline
@@ -105,7 +105,7 @@ if (-not (Test-Path $frontendEnvFile)) {
         Write-Host "Extracting frontend .env template from env_setup.md..." -ForegroundColor Green
         
         $envSetupContent = Get-Content -Path $envSetupFile -Raw
-        $frontendRegex = "(?s)## .*?Frontend Configuration.*?\`\`\`env\r?\n(.*?)\`\`\`"
+        $frontendRegex = '(?s)## .*?Frontend Configuration.*?```env\r?\n(.*?)```'
         $frontendMatch = [regex]::Match($envSetupContent, $frontendRegex)
         if ($frontendMatch.Success) {
             $frontendMatch.Groups[1].Value | Out-File -FilePath $frontendEnvFile -Encoding utf8 -NoNewline
