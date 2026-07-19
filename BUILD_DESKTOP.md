@@ -14,6 +14,24 @@ The desktop app is built using **Electron** for the user interface, which runs a
 
 ---
 
+## 💻 Windows Local Development & Setup (PowerShell)
+
+We have provided native PowerShell automation scripts to match the macOS shell experience:
+
+1. **Automated Setup**: Run the setup assistant in PowerShell from the repository root:
+   ```powershell
+   .\setup_local.ps1
+   ```
+   This will check system prerequisites (Node, NPM, Python, Git), prompt you to configure Google credentials interactively, initialize the Python virtual environment, and install backend/frontend dependencies.
+
+2. **Automated Execution**: To start local databases and launch services (Django Server, Celery Worker, Celery Beat, React Vite Client), run:
+   ```powershell
+   .\start_local.ps1
+   ```
+   This script verifies port connections and spawns each service inside a separate, dedicated PowerShell window so you can monitor logs and terminate them easily.
+
+---
+
 ## 📦 Local Windows Build Guide (.exe)
 
 Since PyInstaller cannot cross-compile Python code (i.e. you cannot build a Windows executable from a macOS machine), you **must** perform local Windows builds on a physical Windows machine or a virtual machine.
