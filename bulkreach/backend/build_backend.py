@@ -45,13 +45,19 @@ def main():
     print(f"🚀 Output Sidecar Name: {sidecar_name}")
     
     # Resolve pyinstaller path (check venv first, then fall back to system PATH)
-    pyinstaller_bin = "pyinstaller"
+    pyinstaller_bin = None
     venv_pyinstaller = backend_dir / "venv" / "bin" / "pyinstaller"
     if sys.platform == "win32":
         venv_pyinstaller = backend_dir / "venv" / "Scripts" / "pyinstaller.exe"
 
     if venv_pyinstaller.exists():
         pyinstaller_bin = str(venv_pyinstaller)
+    else:
+        pyinstaller_bin = shutil.which("pyinstaller")
+        
+    if not pyinstaller_bin:
+        print("❌ Error: Could not find PyInstaller. Please make sure it is installed (pip install pyinstaller).")
+        sys.exit(1)
         
     # Clean up the output directory if it exists to prevent PyInstaller conflicts
     dist_dir = backend_dir / "dist" / executable_name
