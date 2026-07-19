@@ -1,11 +1,11 @@
 # start_local.ps1
-# 🚀 Start BulkReach Services Natively (Windows)
+# Start BulkReach Services Natively (Windows)
 
 # Clear error action to handle connection attempts silently
 $ErrorActionPreference = "SilentlyContinue"
 
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "        🚀 Starting BulkReach Services Natively (Windows)       " -ForegroundColor Cyan
+Write-Host "        Starting BulkReach Services Natively (Windows)          " -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 
 # Check Redis
@@ -13,11 +13,11 @@ $redisSocket = New-Object System.Net.Sockets.TcpClient
 try {
     $redisSocket.Connect("127.0.0.1", 6379)
     if ($redisSocket.Connected) {
-        Write-Host "✓ Redis is running on port 6379." -ForegroundColor Green
+        Write-Host "[OK] Redis is running on port 6379." -ForegroundColor Green
         $redisSocket.Close()
     }
 } catch {
-    Write-Host "⚠️ Warning: Redis is not running on port 6379." -ForegroundColor Yellow
+    Write-Host "[WARN] Warning: Redis is not running on port 6379." -ForegroundColor Yellow
     Write-Host "   Make sure your Redis server is running before starting outreach tasks." -ForegroundColor Yellow
 }
 
@@ -26,11 +26,11 @@ $postgresSocket = New-Object System.Net.Sockets.TcpClient
 try {
     $postgresSocket.Connect("127.0.0.1", 5432)
     if ($postgresSocket.Connected) {
-        Write-Host "✓ PostgreSQL is running on port 5432." -ForegroundColor Green
+        Write-Host "[OK] PostgreSQL is running on port 5432." -ForegroundColor Green
         $postgresSocket.Close()
     }
 } catch {
-    Write-Host "⚠️ Warning: PostgreSQL is not running on port 5432." -ForegroundColor Yellow
+    Write-Host "[WARN] Warning: PostgreSQL is not running on port 5432." -ForegroundColor Yellow
     Write-Host "   Make sure your PostgreSQL server is running before proceeding." -ForegroundColor Yellow
 }
 
@@ -71,12 +71,12 @@ if ($choice -eq "1" -or $choice -eq "2") {
 }
 
 Write-Host "`n========================================================" -ForegroundColor Green
-Write-Host "🎉 Services launched in separate PowerShell windows!" -ForegroundColor Green
+Write-Host "Services launched in separate PowerShell windows!" -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor Green
 Write-Host "   - Frontend Client:   http://localhost:5173" -ForegroundColor Green
 Write-Host "   - Backend API:       http://localhost:8000" -ForegroundColor Green
 Write-Host "   - Django Admin:      http://localhost:8000/admin/" -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor Green
-Write-Host "👉 You can view active outputs and tracebacks in the respective windows." -ForegroundColor Yellow
-Write-Host "👉 To stop any service, close its PowerShell window or press Ctrl+C inside it." -ForegroundColor Yellow
+Write-Host "   You can view active outputs and tracebacks in the respective windows." -ForegroundColor Yellow
+Write-Host "   To stop any service, close its PowerShell window or press Ctrl+C inside it." -ForegroundColor Yellow
 Write-Host "========================================================`n"

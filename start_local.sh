@@ -36,10 +36,10 @@ update_env_var() {
 
 # Clean up function to kill all background processes on exit
 cleanup() {
-    echo -e "\n\n${RED}🛑 Stopping all BulkReach services...${NC}"
+    echo -e "\n\n${RED}[STOP] Stopping all BulkReach services...${NC}"
     kill $TUNNEL_PID $BACKEND_PID $WORKER_PID $BEAT_PID $FRONTEND_PID 2>/dev/null || true
     rm -f "$BACKEND_DIR/ssh_tunnel.log"
-    echo -e "${GREEN}✓ All services stopped.${NC}"
+    echo -e "${GREEN}[OK] All services stopped.${NC}"
     exit 0
 }
 
@@ -47,7 +47,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 echo -e "${BLUE}===============================================================${NC}"
-echo -e "${BLUE}        🚀 Starting BulkReach Services Natively...               ${NC}"
+echo -e "${BLUE}        Starting BulkReach Services Natively...                 ${NC}"
 echo -e "${BLUE}================================================================${NC}"
 
 # Check that virtualenv exists
@@ -56,29 +56,29 @@ if [ ! -d "$BACKEND_DIR/venv" ]; then
     exit 1
 fi
 
-echo -e "\n${YELLOW}🔍 Checking Database and Cache Services...${NC}"
+echo -e "\n${YELLOW}Checking Database and Cache Services...${NC}"
 
 # Check and start Redis if needed
 if ! redis-cli ping >/dev/null 2>&1; then
-    echo -e "${YELLOW}⚠️ Redis is not running. Attempting to start it via Homebrew...${NC}"
+    echo -e "${YELLOW}[WARN] Redis is not running. Attempting to start it via Homebrew...${NC}"
     if command -v brew &> /dev/null; then
         brew services start redis
         sleep 2
         if redis-cli ping >/dev/null 2>&1; then
-            echo -e "${GREEN}✓ Redis started successfully.${NC}"
+            echo -e "${GREEN}[OK] Redis started successfully.${NC}"
         else
-            echo -e "${RED}❌ Failed to start Redis. Please make sure Redis is installed and running on port 6379.${NC}"
+            echo -e "${RED}[FAIL] Failed to start Redis. Please make sure Redis is installed and running on port 6379.${NC}"
         fi
     else
-        echo -e "${RED}❌ Redis is not running, and Homebrew was not found. Please start Redis manually.${NC}"
+        echo -e "${RED}[FAIL] Redis is not running, and Homebrew was not found. Please start Redis manually.${NC}"
     fi
 else
-    echo -e "${GREEN}✓ Redis is running.${NC}"
+    echo -e "${GREEN}[OK] Redis is running.${NC}"
 fi
 
 # Check and start PostgreSQL if needed
 if ! nc -z localhost 5432 >/dev/null 2>&1 && ! pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
-    echo -e "${YELLOW}⚠️ PostgreSQL is not running on port 5432. Attempting to start it via Homebrew...${NC}"
+    echo -e "${YELLOW}[WARN] PostgreSQL is not running on port 5432. Attempting to start it via Homebrew...${NC}"
     if command -v brew &> /dev/null; then
         if brew list postgresql@18 &>/dev/null; then
             brew services start postgresql@18
@@ -89,15 +89,15 @@ if ! nc -z localhost 5432 >/dev/null 2>&1 && ! pg_isready -h localhost -p 5432 >
         fi
         sleep 3
         if nc -z localhost 5432 >/dev/null 2>&1 || pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
-            echo -e "${GREEN}✓ PostgreSQL started successfully.${NC}"
+            echo -e "${GREEN}[OK] PostgreSQL started successfully.${NC}"
         else
-            echo -e "${RED}❌ Failed to start PostgreSQL on port 5432. Please start it manually.${NC}"
+            echo -e "${RED}[FAIL] Failed to start PostgreSQL on port 5432. Please start it manually.${NC}"
         fi
     else
-        echo -e "${RED}❌ PostgreSQL is not running on port 5432. Please start it manually.${NC}"
+        echo -e "${RED}[FAIL] PostgreSQL is not running on port 5432. Please start it manually.${NC}"
     fi
 else
-    echo -e "${GREEN}✓ PostgreSQL is running on port 5432.${NC}"
+    echo -e "${GREEN}[OK] PostgreSQL is running on port 5432.${NC}"
 fi
 echo ""
 
@@ -122,7 +122,7 @@ if [ "$START_CHOICE" == "1" ]; then
     ssh -o StrictHostKeyChecking=no -R 80:localhost:8000 nokey@localhost.run > "$BACKEND_DIR/ssh_tunnel.log" 2>&1 &
     TUNNEL_PID=$!
     
-    echo -ne "${YELLOW}⏳ Waiting for public tunnel URL (up to 25s)...${NC}"
+    echo -ne "${YELLOW}Waiting for public tunnel URL (up to 25s)...${NC}"
     TUNNEL_URL=""
     for i in {1..25}; do
         echo -n "."
@@ -137,12 +137,12 @@ if [ "$START_CHOICE" == "1" ]; then
     echo ""
     
     if [ -z "$TUNNEL_URL" ]; then
-        echo -e "${RED}⚠️ Warning: Could not establish SSH tunnel. Email open tracking will only work on localhost.${NC}"
+        echo -e "${RED}[WARN] Warning: Could not establish SSH tunnel. Email open tracking will only work on localhost.${NC}"
         update_env_var "BACKEND_URL" "http://localhost:8000"
         update_env_var "ALLOWED_HOSTS" "localhost,127.0.0.1"
     else
-        echo -e "${GREEN}🔑 Public Tunnel established!${NC}"
-        echo -e "👉 Backend exposed at: ${BLUE}${TUNNEL_URL}${NC}"
+        echo -e "${GREEN}[OK] Public Tunnel established!${NC}"
+        echo -e "   Backend exposed at: ${BLUE}${TUNNEL_URL}${NC}"
         
         TUNNEL_DOMAIN=$(echo "$TUNNEL_URL" | sed -E 's|https://||')
         update_env_var "BACKEND_URL" "$TUNNEL_URL"
@@ -189,7 +189,7 @@ fi
 LAN_IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1 || ipconfig getifaddr en2 || hostname -I 2>/dev/null | awk '{print $1}' || echo "")
 
 echo -e "\n========================================================"
-echo -e "🎉 ${GREEN}Services launched successfully!${NC}"
+echo -e "   Services launched successfully!                      "
 echo -e "========================================================"
 if [ "$START_CHOICE" == "1" ] || [ "$START_CHOICE" == "2" ] || [ "$START_CHOICE" == "4" ]; then
     echo -e "   - Frontend Client (Local):   ${BLUE}http://localhost:5174${NC} (or port 5173)"
@@ -205,8 +205,7 @@ if [ "$START_CHOICE" == "1" ] || [ "$START_CHOICE" == "3" ] || [ "$START_CHOICE"
     echo -e "   - Django Admin:              ${BLUE}http://localhost:8000/admin/${NC}"
 fi
 echo -e "========================================================"
-
-echo -e "👉 ${YELLOW}Press Ctrl+C in this terminal window to stop all running services.${NC}"
+echo -e "   Press Ctrl+C in this terminal window to stop all running services."
 echo -e "========================================================\n"
 
 # Keep the script running to wait for child processes

@@ -1,11 +1,11 @@
 # setup_local.ps1
-# 📬 BulkReach — Local Setup Assistant (Windows)
+# BulkReach - Local Setup Assistant (Windows)
 
 # Clear error action to handle connection attempts silently
 $ErrorActionPreference = "SilentlyContinue"
 
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "        📬 BulkReach — Local Setup Assistant (Windows)         " -ForegroundColor Cyan
+Write-Host "        BulkReach - Local Setup Assistant (Windows)            " -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 
 # Prerequisite checker function
@@ -31,7 +31,7 @@ function Check-Command ($cmd, $name, $required) {
     }
 }
 
-Write-Host "`n🔍 Checking System Prerequisites..." -ForegroundColor Yellow
+Write-Host "`nChecking System Prerequisites..." -ForegroundColor Yellow
 $hasPrereqs = $true
 $hasPrereqs = (Check-Command "node" "Node.js" $true) -and $hasPrereqs
 $hasPrereqs = (Check-Command "npm" "NPM" $true) -and $hasPrereqs
@@ -40,7 +40,7 @@ $hasPrereqs = (Check-Command "git" "Git" $true) -and $hasPrereqs
 $hasPrereqs = (Check-Command "docker" "Docker" $false) -and $hasPrereqs
 
 if (-not $hasPrereqs) {
-    Write-Host "`n❌ Prerequisite checks failed. Please install the required software listed above and re-run setup." -ForegroundColor Red
+    Write-Host "`n[FAIL] Prerequisite checks failed. Please install the required software listed above and re-run setup." -ForegroundColor Red
     Exit
 }
 
@@ -58,7 +58,7 @@ $googleSecret = ""
 $configureOauthRun = $false
 
 if (-not (Test-Path $backendEnvFile)) {
-    Write-Host "⚠️ Warning: Backend .env file not found in $backendEnvFile." -ForegroundColor Yellow
+    Write-Host "[WARN] Warning: Backend .env file not found in $backendEnvFile." -ForegroundColor Yellow
     if (Test-Path $envSetupFile) {
         Write-Host "Extracting backend .env template from env_setup.md..." -ForegroundColor Green
         
@@ -70,7 +70,7 @@ if (-not (Test-Path $backendEnvFile)) {
             Write-Host "Successfully generated backend/.env template." -ForegroundColor Green
             
             # Interactively prompt for Google OAuth Client secrets
-            Write-Host "`n🔑 Google OAuth Setup Assistant" -ForegroundColor Yellow
+            Write-Host "`nGoogle OAuth Setup Assistant" -ForegroundColor Yellow
             $doOauth = Read-Host "Would you like to configure your Google OAuth credentials now? (y/n) [default n]"
             if ($doOauth -like "y*" -or $doOauth -like "Y*") {
                 $googleId = Read-Host "Enter Google OAuth Client ID"
@@ -88,7 +88,7 @@ if (-not (Test-Path $backendEnvFile)) {
                     $envContent = $envContent -replace "(?m)^GOOGLE_CLIENT_SECRET=.*", "GOOGLE_CLIENT_SECRET=$googleSecret"
                     $envContent | Out-File -FilePath $backendEnvFile -Encoding utf8 -NoNewline
                 }
-                Write-Host "✓ Google credentials written to backend/.env." -ForegroundColor Green
+                Write-Host "[OK] Google credentials written to backend/.env." -ForegroundColor Green
                 $configureOauthRun = $true
             } else {
                 Write-Host "Using default placeholders for Google OAuth variables." -ForegroundColor Yellow
@@ -96,11 +96,11 @@ if (-not (Test-Path $backendEnvFile)) {
         }
     }
 } else {
-    Write-Host "✓ Backend .env file found." -ForegroundColor Green
+    Write-Host "[OK] Backend .env file found." -ForegroundColor Green
 }
 
 if (-not (Test-Path $frontendEnvFile)) {
-    Write-Host "⚠️ Warning: Frontend .env file not found in $frontendEnvFile." -ForegroundColor Yellow
+    Write-Host "[WARN] Warning: Frontend .env file not found in $frontendEnvFile." -ForegroundColor Yellow
     if (Test-Path $envSetupFile) {
         Write-Host "Extracting frontend .env template from env_setup.md..." -ForegroundColor Green
         
@@ -116,12 +116,12 @@ if (-not (Test-Path $frontendEnvFile)) {
                 $frontContent = Get-Content -Path $frontendEnvFile -Raw
                 $frontContent = $frontContent -replace "(?m)^VITE_GOOGLE_CLIENT_ID=.*", "VITE_GOOGLE_CLIENT_ID=$googleId"
                 $frontContent | Out-File -FilePath $frontendEnvFile -Encoding utf8 -NoNewline
-                Write-Host "✓ Synced Google Client ID to frontend/.env." -ForegroundColor Green
+                Write-Host "[OK] Synced Google Client ID to frontend/.env." -ForegroundColor Green
             }
         }
     }
 } else {
-    Write-Host "✓ Frontend .env file found." -ForegroundColor Green
+    Write-Host "[OK] Frontend .env file found." -ForegroundColor Green
 }
 
 # Step 2: Choose Setup Type
@@ -138,11 +138,11 @@ if ($setupChoice -eq "1") {
     # Check if Docker is running
     docker info > $null 2>&1
     if (-not $?) {
-        Write-Host "❌ Error: Docker daemon is not running. Please open Docker Desktop on your PC and wait for it to start before continuing." -ForegroundColor Red
+        Write-Host "[ERROR] Error: Docker daemon is not running. Please open Docker Desktop on your PC and wait for it to start before continuing." -ForegroundColor Red
         Exit
     }
     
-    Write-Host "✓ Docker daemon is active." -ForegroundColor Green
+    Write-Host "[OK] Docker daemon is active." -ForegroundColor Green
     Set-Location "$PSScriptRoot\bulkreach"
     
     Write-Host "Building and starting Docker services..." -ForegroundColor Blue
@@ -163,7 +163,7 @@ if ($setupChoice -eq "1") {
     docker compose up -d
     
     Write-Host "`n================================================================" -ForegroundColor Green
-    Write-Host "🎉 Setup Complete! BulkReach is running via Docker Compose." -ForegroundColor Green
+    Write-Host "Setup Complete! BulkReach is running via Docker Compose." -ForegroundColor Green
     Write-Host "   - Frontend: http://localhost:5173" -ForegroundColor Green
     Write-Host "   - Backend API: http://localhost:8000" -ForegroundColor Green
     Write-Host "   - API Docs: http://localhost:8000/api/docs/" -ForegroundColor Green
@@ -222,7 +222,7 @@ if ($setupChoice -eq "1") {
     # Run pip install and check status
     $pipInstall = Start-Process python -ArgumentList "-m pip install -r requirements.txt" -Wait -NoNewWindow -PassThru
     if ($pipInstall.ExitCode -ne 0) {
-        Write-Host "❌ Failed to install Python dependencies. Please verify your Python configuration and environment." -ForegroundColor Red
+        Write-Host "[FAIL] Failed to install Python dependencies. Please verify your Python configuration and environment." -ForegroundColor Red
         Exit
     }
     
@@ -232,7 +232,7 @@ if ($setupChoice -eq "1") {
     Write-Host "Installing Playwright web driver (Phase 2 Scraper)..." -ForegroundColor Blue
     $playwrightInstall = Start-Process playwright -ArgumentList "install chromium" -Wait -NoNewWindow -PassThru
     if ($playwrightInstall.ExitCode -ne 0) {
-        Write-Host "⚠️ Warning: Playwright browser download failed. You can run 'playwright install chromium' manually later." -ForegroundColor Yellow
+        Write-Host "[WARN] Warning: Playwright browser download failed. You can run 'playwright install chromium' manually later." -ForegroundColor Yellow
     }
     
     $createSu = Read-Host "Would you like to create a superuser admin account now? (y/n)"
@@ -247,13 +247,13 @@ if ($setupChoice -eq "1") {
     Write-Host "Installing npm packages..." -ForegroundColor Blue
     $npmInstall = Start-Process npm -ArgumentList "install" -Wait -NoNewWindow -PassThru
     if ($npmInstall.ExitCode -ne 0) {
-        Write-Host "❌ npm install failed. Please check your Node/NPM version." -ForegroundColor Red
+        Write-Host "[FAIL] npm install failed. Please check your Node/NPM version." -ForegroundColor Red
         Exit
     }
     
     Set-Location $PSScriptRoot
     Write-Host "`n================================================================" -ForegroundColor Green
-    Write-Host "🎉 Native Setup Complete! Here's how to run the services:" -ForegroundColor Green
+    Write-Host "Native Setup Complete! Here's how to run the services:" -ForegroundColor Green
     Write-Host "================================================================" -ForegroundColor Green
     Write-Host "`nRun this PowerShell script from the project root to start the app natively on Windows:" -ForegroundColor Yellow
     Write-Host "   .\start_local.ps1" -ForegroundColor Green

@@ -8,7 +8,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}================================================================${NC}"
-echo -e "${BLUE}        📬 BulkReach — Local Setup Assistant (macOS)           ${NC}"
+echo -e "${BLUE}        BulkReach - Local Setup Assistant (macOS)               ${NC}"
 echo -e "${BLUE}================================================================${NC}"
 
 # Load NVM (Node Version Manager) if it exists to resolve node/npm commands in the subshell
@@ -52,7 +52,7 @@ check_dependency() {
     fi
 }
 
-echo -e "\n${YELLOW}🔍 Checking System Prerequisites...${NC}"
+echo -e "\n${YELLOW}Checking System Prerequisites...${NC}"
 HAS_PREREQS=true
 
 check_dependency "node" "Node.js" "true" || HAS_PREREQS=false
@@ -62,7 +62,7 @@ check_dependency "git" "Git" "true" || HAS_PREREQS=false
 check_dependency "docker" "Docker" "false"
 
 if [ "$HAS_PREREQS" = "false" ]; then
-    echo -e "\n${RED}❌ Prerequisite checks failed. Please install the required software listed above and re-run setup.${NC}"
+    echo -e "\n${RED}[FAIL] Prerequisite checks failed. Please install the required software listed above and re-run setup.${NC}"
     exit 1
 fi
 
@@ -82,7 +82,7 @@ if [ ! -f "$BACKEND_DIR/.env" ]; then
         echo -e "${GREEN}Successfully generated $BACKEND_DIR/.env template.${NC}"
         
         # Interactively prompt for Google OAuth Client secrets
-        echo -e "\n${YELLOW}🔑 Google OAuth Setup Assistant${NC}"
+        echo -e "\n${YELLOW}Google OAuth Setup Assistant${NC}"
         echo "Would you like to configure your Google OAuth credentials now?"
         echo "If you skip this step, generic placeholders will be used and you can configure them later."
         read -p "Configure Google credentials? (y/n) [default n]: " DO_OAUTH
@@ -101,7 +101,7 @@ if [ ! -f "$BACKEND_DIR/.env" ]; then
                 sed -E -i.bak "s|^GOOGLE_CLIENT_SECRET=.*|GOOGLE_CLIENT_SECRET=${GOOGLE_SECRET}|" "$BACKEND_DIR/.env"
             fi
             rm -f "$BACKEND_DIR/.env.bak"
-            echo -e "${GREEN}✓ Google credentials written to backend/.env.${NC}"
+            echo -e "${GREEN}[OK] Google credentials written to backend/.env.${NC}"
             CONFIGURE_OAUTH_RUN=true
         else
             echo -e "${YELLOW}Using default placeholders for Google OAuth variables.${NC}"
@@ -111,7 +111,7 @@ if [ ! -f "$BACKEND_DIR/.env" ]; then
         echo -e "${YELLOW}Copied backend/.env.example to backend/.env. Please configure it manually.${NC}"
     fi
 else
-    echo -e "${GREEN}✓ Backend .env file found.${NC}"
+    echo -e "${GREEN}[OK] Backend .env file found.${NC}"
 fi
 
 if [ ! -f "$FRONTEND_DIR/.env" ]; then
@@ -125,14 +125,14 @@ if [ ! -f "$FRONTEND_DIR/.env" ]; then
         if [ "$CONFIGURE_OAUTH_RUN" = "true" ] && [ ! -z "$GOOGLE_ID" ]; then
             sed -E -i.bak "s|^VITE_GOOGLE_CLIENT_ID=.*|VITE_GOOGLE_CLIENT_ID=${GOOGLE_ID}|" "$FRONTEND_DIR/.env"
             rm -f "$FRONTEND_DIR/.env.bak"
-            echo -e "${GREEN}✓ Synced Google Client ID to frontend/.env.${NC}"
+            echo -e "${GREEN}[OK] Synced Google Client ID to frontend/.env.${NC}"
         fi
     elif [ -f "$FRONTEND_DIR/.env.example" ]; then
         cp "$FRONTEND_DIR/.env.example" "$FRONTEND_DIR/.env"
         echo -e "${YELLOW}Copied frontend/.env.example to frontend/.env. Please configure it manually.${NC}"
     fi
 else
-    echo -e "${GREEN}✓ Frontend .env file found.${NC}"
+    echo -e "${GREEN}[OK] Frontend .env file found.${NC}"
 fi
 
 # Step 2: Choose Setup Type
@@ -153,7 +153,7 @@ if [ "$SETUP_CHOICE" == "1" ]; then
         exit 1
     fi
     
-    echo -e "${GREEN}✓ Docker daemon is active.${NC}"
+    echo -e "${GREEN}[OK] Docker daemon is active.${NC}"
     cd "$BASE_DIR/bulkreach"
     
     echo -e "${BLUE}Building and starting Docker services...${NC}"
@@ -175,7 +175,7 @@ if [ "$SETUP_CHOICE" == "1" ]; then
     docker compose up -d
     
     echo -e "${GREEN}================================================================${NC}"
-    echo -e "${GREEN}🎉 Setup Complete! BulkReach is running via Docker Compose.${NC}"
+    echo -e "${GREEN}Setup Complete! BulkReach is running via Docker Compose.${NC}"
     echo -e "   - Frontend: http://localhost:5173"
     echo -e "   - Backend API: http://localhost:8000"
     echo -e "   - API Docs: http://localhost:8000/api/docs/"
@@ -197,7 +197,7 @@ else
     
     # Setup Redis (Smart Check)
     if command -v redis-server &>/dev/null || brew list redis &>/dev/null; then
-        echo -e "${GREEN}✓ Redis is already installed.${NC}"
+        echo -e "${GREEN}[OK] Redis is already installed.${NC}"
     else
         echo -e "${BLUE}Installing Redis via Homebrew...${NC}"
         brew install redis
@@ -224,7 +224,7 @@ else
     fi
 
     if [ "$HAS_POSTGRES" = "true" ]; then
-        echo -e "${GREEN}✓ PostgreSQL is already installed.${NC}"
+        echo -e "${GREEN}[OK] PostgreSQL is already installed.${NC}"
     else
         echo -e "${BLUE}Installing PostgreSQL 15 via Homebrew...${NC}"
         brew install postgresql@15
@@ -247,7 +247,7 @@ else
     createuser -s bulkreach 2>/dev/null || true
     createdb bulkreach -O bulkreach 2>/dev/null || true
     psql -d bulkreach -c "ALTER USER bulkreach WITH PASSWORD 'password';" 2>/dev/null || true
-    echo -e "${GREEN}✓ Database 'bulkreach' configured successfully.${NC}"
+    echo -e "${GREEN}[OK] Database 'bulkreach' configured successfully.${NC}"
     
     # Setup Python virtualenv and backend dependencies
     echo -e "\n${YELLOW}[Step 3/4] Setting up Backend Python Environment...${NC}"
@@ -263,7 +263,7 @@ else
     pip install --upgrade pip
     
     if ! pip install -r requirements.txt; then
-        echo -e "${RED}❌ Failed to install Python dependencies. Please check the logs above.${NC}"
+        echo -e "${RED}[FAIL] Failed to install Python dependencies. Please check the logs above.${NC}"
         exit 1
     fi
     
@@ -272,7 +272,7 @@ else
     
     echo -e "${BLUE}Installing Playwright web driver (Phase 2 Scraper)...${NC}"
     if ! playwright install chromium; then
-        echo -e "${YELLOW}⚠️ Warning: Playwright browser download failed. You can run 'playwright install chromium' manually later.${NC}"
+        echo -e "${YELLOW}[WARN] Warning: Playwright browser download failed. You can run 'playwright install chromium' manually later.${NC}"
     fi
     
     echo -e "${BLUE}Setting up Django superuser (optional)...${NC}"
@@ -286,12 +286,12 @@ else
     cd "$FRONTEND_DIR"
     echo -e "${BLUE}Installing npm packages...${NC}"
     if ! npm install; then
-        echo -e "${RED}❌ npm install failed. Please verify your Node version and network connection.${NC}"
+        echo -e "${RED}[FAIL] npm install failed. Please verify your Node version and network connection.${NC}"
         exit 1
     fi
     
     echo -e "${GREEN}================================================================${NC}"
-    echo -e "${GREEN}🎉 Native Setup Complete! Here's how to run the services:${NC}"
+    echo -e "${GREEN}Native Setup Complete! Here's how to run the services:${NC}"
     echo -e "${GREEN}================================================================${NC}"
     echo -e "\nRun each of the following commands in separate terminal windows:\n"
     
